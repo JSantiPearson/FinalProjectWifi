@@ -16,7 +16,8 @@ public class LinkLayer implements Dot11Interface
 	private PrintWriter output; // The output stream we'll write to
 
     // create object of ArrayBlockingQueue 
-    ArrayBlockingQueue<Packet> packetHolder = new ArrayBlockingQueue<Packet>(1000);    
+    ArrayBlockingQueue<Packet> packetHolder = new ArrayBlockingQueue<Packet>(1000);   
+    ArrayBlockingQueue<Packet> packetHolderIn = new ArrayBlockingQueue<Packet>(1000);
     
 	/**
 	 * Constructor takes a MAC address and the PrintWriter to which our output will
@@ -31,6 +32,8 @@ public class LinkLayer implements Dot11Interface
 		theRF = new RF(null, null);
 		sender send = new sender(theRF, packetHolder);
 		(new Thread(send)).start();
+		reader read = new reader(theRF);
+		(new Thread(read)).start();
 	}
 
 	/**
@@ -52,9 +55,17 @@ public class LinkLayer implements Dot11Interface
 	 */
 	public int recv(Transmission t) {
 		output.println("LinkLayer: Pretending to block on recv()");
-		while(true); // <--- This is a REALLY bad way to wait.  Sleep a little each time through.
+		while(true) {
+			
+			
+	    	 try {
+				Thread.sleep(3000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+	      }
+	 } // <--- This is a REALLY bad way to wait.  Sleep a little each time through.
 		// return 0;
-	}
 
 	/**
 	 * Returns a current status code.  See docs for full description.
