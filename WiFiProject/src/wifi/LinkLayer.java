@@ -28,8 +28,8 @@ public class LinkLayer implements Dot11Interface
 		this.ourMAC = ourMAC;
 		this.output = output;
 		output.println("LinkLayer: Constructor ran.");
-		sender send = new sender(theRF, packetHolder);
 		theRF = new RF(null, null);
+		sender send = new sender(theRF, packetHolder);
 		(new Thread(send)).start();
 	}
 
@@ -41,9 +41,7 @@ public class LinkLayer implements Dot11Interface
 		short seq = 0;
 		output.println("LinkLayer: Sending "+len+" bytes to "+dest); 
 		Packet pack = new Packet(0, seq, ourMAC, dest, data);
-		System.out.println(pack.toString());
 		packetHolder.add(pack);
-		System.out.println(packetHolder.peek());
 		//theRF.transmit(data);
 		return len;
 	}

@@ -8,7 +8,7 @@ import rf.RF;
 
 public class sender implements Runnable {
 	
-	private RF rf = null;
+	private RF rf;
 	ArrayBlockingQueue<Packet> output;
 	private Packet packet;
 	Random rand = new Random();
@@ -24,7 +24,9 @@ public class sender implements Runnable {
 		System.out.println("Writer is alive and well");
 		try {
 			packet = output.take();
+			System.out.println(packet);
 			curpack = packet.packet;
+			System.out.println(curpack);
 		} catch (InterruptedException e1) {
 			
 			e1.printStackTrace();
