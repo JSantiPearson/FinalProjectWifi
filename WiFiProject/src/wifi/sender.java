@@ -1,7 +1,6 @@
 //sender class
 
 package wifi;
-import java.util.Arrays;
 import java.util.Random;
 import java.util.concurrent.ArrayBlockingQueue;
 
@@ -10,11 +9,12 @@ import rf.RF;
 public class sender implements Runnable {
 	
 	private RF rf = null;
-	ArrayBlockingQueue<String> output;
-	private String packet;
+	ArrayBlockingQueue<Packet> output;
+	private Packet packet;
 	Random rand = new Random();
+	private byte[] curpack;
 	
-	public sender(RF theRF, ArrayBlockingQueue<String> output) {
+	public sender(RF theRF, ArrayBlockingQueue<Packet> output) {
 		rf = theRF;
 		this.output = output;
 	}
@@ -24,6 +24,7 @@ public class sender implements Runnable {
 		System.out.println("Writer is alive and well");
 		try {
 			packet = output.take();
+			curpack = packet.packet;
 		} catch (InterruptedException e1) {
 			
 			e1.printStackTrace();
@@ -38,7 +39,7 @@ public class sender implements Runnable {
 					e.printStackTrace();
 				 }
 			 }
-			// rf.transmit(packet); 
+			 rf.transmit(curpack); 
 	    	 try {
 				Thread.sleep(sleeper);
 			} catch (InterruptedException e) {
@@ -46,6 +47,7 @@ public class sender implements Runnable {
 			}
 	    	 try {
 				packet = output.take();
+				curpack = packet.packet;
 			} catch (InterruptedException e) {
 				
 				e.printStackTrace();

@@ -9,7 +9,7 @@ public class Packet {
     public static int BEACON = 2;
     public static int CTS = 4;
     public static int RTS = 5;
-    private byte[] packet;
+    public byte[] packet;
     
     public Packet(int type, short seq, short src, short dest, byte[] data) {
     	 if (data.length > 2038) {
