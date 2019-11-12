@@ -1,7 +1,7 @@
 //reader class
 
 package wifi;
-import java.util.Arrays;
+
 import java.util.concurrent.ArrayBlockingQueue;
 
 import rf.RF;
@@ -9,54 +9,32 @@ import rf.RF;
 public class reader implements Runnable {
 	
 	private RF rf;
+	LinkLayer link;
 	ArrayBlockingQueue<Packet> input;
-	private Packet test;
-	private byte[] in;
 	
-	public reader(RF theRF) {
+	public reader(RF theRF, ArrayBlockingQueue<Packet> input) {
 		rf = theRF;
+		this.input = input;
+	}
+	 
+	 private void unpackIt(Packet packet) {
+		 if (packet.getDestAddress() == -1) {
+			 try {
+				 this.input.put(packet);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		 }
 	}
 
 	@Override
 	public void run() {
 		System.out.println("Reader is alive and well");
 		while(true) {
-			int type = 0;
-			short seq = 0;
-			short destination = 0;
-			short src = 0;
-			byte[] data = null;
-			
-			in = rf.receive();
-			
-			int shifter = 0;
-			int temp = 0;
-			int temp2 = 0;
-			while(true) {
-				in = rf.receive();
-				System.out.println("Recieved: " + Arrays.toString(in));
-				for(int i = 1; i >= 0; i--) {
-					temp = in[i];
-					shifter = 8 * i;
-					temp = temp << shifter;
-				//	incomingMac += temp;
-				}
-				for(int j = 9; j >= 2; j--) {
-					temp2 = j - 2;
-					temp = in[j];
-					if(in[j] <= 0) {
-						temp = temp + 256;	
-					}
-					shifter = 8 * temp2;
-					temp = temp << shifter;
-				//	incomingMac += temp;
-				}
-			
-			Packet pack = new Packet(0, seq, src, destination, data);
-			//System.out.println(curpack);
-			}
+			byte[] packetBytes = rf.receive();
+			Packet packet = new Packet(packetBytes);
+			this.unpackIt(packet);
 		}
 		
 	}
-
 }
