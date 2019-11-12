@@ -14,7 +14,7 @@ public class LinkLayer implements Dot11Interface
 	private RF theRF;           // You'll need one of these eventually
 	private short ourMAC;       // Our MAC address
 	private PrintWriter output; // The output stream we'll write to
-	private ArrayBlockingQueue<String> packetHolder; 
+	private ArrayBlockingQueue<Packet> packetHolder; 
 	
 	
 	/**
@@ -27,10 +27,10 @@ public class LinkLayer implements Dot11Interface
 		this.ourMAC = ourMAC;
 		this.output = output;
 		output.println("LinkLayer: Constructor ran.");
+		ArrayBlockingQueue<Packet> packetHolder = new ArrayBlockingQueue<Packet>(130);
 		sender send = new sender(theRF, packetHolder);
 		theRF = new RF(null, null);
 		(new Thread(send)).start();
-		while(true); 
 	}
 
 	/**
@@ -38,11 +38,12 @@ public class LinkLayer implements Dot11Interface
 	 * of bytes to send.  See docs for full description.
 	 */
 	public int send(short dest, byte[] data, int len) {
-		short destin = dest;
-		byte[] packet = data;
 		int length = len;
+		short seq = 0;
 		output.println("LinkLayer: Sending "+len+" bytes to "+dest); 
-		
+		Packet pack = new Packet(0, seq, ourMAC, dest, data);
+		packetHolder.add(pack);
+		System.out.println(packetHolder.toString());
 		//theRF.transmit(data);
 		return len;
 	}
