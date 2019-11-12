@@ -11,6 +11,20 @@ public class Packet {
     public static int RTS = 5;
     public byte[] packet;
     
+    public Packet(byte[] packetBytes) {
+        final int dataSize = packetBytes.length - 10;
+        if (dataSize > 2038) {
+            throw new IllegalArgumentException("Too much data in the packet!");
+        }
+        if (dataSize < 0) {
+            throw new IllegalArgumentException("Negative data in your packet, that's impossible.");
+        }
+        this.packet = new byte[packetBytes.length];
+        for (int i = 0; i < packetBytes.length; ++i) {
+            this.packet[i] = packetBytes[i];
+        }
+    }
+    
     public Packet(int type, short seq, short src, short dest, byte[] data) {
     	 if (data.length > 2038) {
              throw new IllegalArgumentException("Packet size too large.");
@@ -32,7 +46,8 @@ public class Packet {
     	short src = 564;
     	short dest = 312;
     	Packet packet = new Packet(DATA, seq, src, dest, data);
-    	System.out.println(packet);
+    	Packet packet2 = new Packet(packet.packet);
+    	System.out.println(packet2);
     }
 
 	public void setType(int type) {

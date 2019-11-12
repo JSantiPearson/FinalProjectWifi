@@ -14,6 +14,8 @@ public class LinkLayer implements Dot11Interface
 	private RF theRF;           // You'll need one of these eventually
 	private short ourMAC;       // Our MAC address
 	private PrintWriter output; // The output stream we'll write to
+	
+	public reader read;
 
     // create object of ArrayBlockingQueue 
     ArrayBlockingQueue<Packet> packetHolder = new ArrayBlockingQueue<Packet>(1000);   
@@ -32,7 +34,7 @@ public class LinkLayer implements Dot11Interface
 		theRF = new RF(null, null);
 		sender send = new sender(theRF, packetHolder);
 		(new Thread(send)).start();
-		reader read = new reader(theRF);
+		read = new reader(theRF, packetHolderIn);
 		(new Thread(read)).start();
 	}
 
@@ -56,13 +58,17 @@ public class LinkLayer implements Dot11Interface
 	public int recv(Transmission t) {
 		output.println("LinkLayer: Pretending to block on recv()");
 		while(true) {
-			
-			
-	    	 try {
-				Thread.sleep(3000);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
+			 try {
+				 Packet packet = this.read.input.take();
+				 System.out.println("Test packet :" + packet);
+		         byte[] data = packet.getData();
+		         t.setSourceAddr(packet.getSourceAddress());
+		         t.setDestAddr(packet.getDestAddress());
+		         t.setBuf(data);
+		         return data.length;
+			 } catch (InterruptedException e) {
+				 e.printStackTrace();
+			 }  
 	      }
 	 } // <--- This is a REALLY bad way to wait.  Sleep a little each time through.
 		// return 0;
