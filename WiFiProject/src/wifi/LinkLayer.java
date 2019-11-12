@@ -17,7 +17,7 @@ public class LinkLayer implements Dot11Interface
 
     // create object of ArrayBlockingQueue 
     ArrayBlockingQueue<Packet> packetHolder = new ArrayBlockingQueue<Packet>(1000);   
-    ArrayBlockingQueue<Packet> packetHolderIn = new ArrayBlockingQueue<Packet>(1000);
+    ArrayBlockingQueue<Transmission> packetHolderIn = new ArrayBlockingQueue<Transmission>(1000);
     
 	/**
 	 * Constructor takes a MAC address and the PrintWriter to which our output will
@@ -32,8 +32,8 @@ public class LinkLayer implements Dot11Interface
 		theRF = new RF(null, null);
 		sender send = new sender(theRF, packetHolder);
 		(new Thread(send)).start();
-		reader read = new reader(theRF);
-		(new Thread(read)).start();
+		//der read = new reader(theRF, packetHolderIn);
+		//(new Thread(read)).start();
 	}
 
 	/**
@@ -53,10 +53,15 @@ public class LinkLayer implements Dot11Interface
 	 * Recv method blocks until data arrives, then writes it an address info into
 	 * the Transmission object.  See docs for full description.
 	 */
-	public int recv(Transmission t) {
+	public int recv(Transmission t) { 
 		output.println("LinkLayer: Pretending to block on recv()");
 		while(true) {
-			
+			try {
+				t = packetHolderIn.take();
+			} catch (InterruptedException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
 			
 	    	 try {
 				Thread.sleep(3000);

@@ -10,11 +10,12 @@ public class reader implements Runnable {
 	
 	private RF rf;
 	ArrayBlockingQueue<Packet> input;
-	private Packet test;
+	private Transmission test;
 	private byte[] in;
 	
-	public reader(RF theRF) {
+	public reader(RF theRF, ArrayBlockingQueue inputx) {
 		rf = theRF;
+		input = inputx;
 	}
 
 	@Override
@@ -34,12 +35,11 @@ public class reader implements Runnable {
 			int temp2 = 0;
 			while(true) {
 				in = rf.receive();
-				System.out.println("Recieved: " + Arrays.toString(in));
-				for(int i = 1; i >= 0; i--) {
-					temp = in[i];
-					shifter = 8 * i;
-					temp = temp << shifter;
-				//	incomingMac += temp;
+				//test = in;
+				//input
+				//System.out.println("Recieved: " + Arrays.toString(in));
+				/*for(int i = 6; i >= 0; i--) {
+					data = in[i];
 				}
 				for(int j = 9; j >= 2; j--) {
 					temp2 = j - 2;
@@ -50,10 +50,10 @@ public class reader implements Runnable {
 					shifter = 8 * temp2;
 					temp = temp << shifter;
 				//	incomingMac += temp;
-				}
+				}*/
 			
 			Packet pack = new Packet(0, seq, src, destination, data);
-			//System.out.println(curpack);
+			input.add(pack); 
 			}
 		}
 		
