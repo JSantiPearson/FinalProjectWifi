@@ -26,7 +26,6 @@ public class sender implements Runnable {
 			packet = output.take();
 			System.out.println(packet);
 			curpack = packet.packet;
-			System.out.println(curpack);
 		} catch (InterruptedException e1) {
 			
 			e1.printStackTrace();
