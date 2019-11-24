@@ -56,7 +56,4 @@ public class sender implements Runnable {
 	      }
 		
 	}
-
-	
-	
 }

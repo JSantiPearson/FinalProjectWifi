@@ -11,14 +11,16 @@ public class reader implements Runnable {
 	private RF rf;
 	LinkLayer link;
 	ArrayBlockingQueue<Packet> input;
+	private short ourMAC;
 	
-	public reader(RF theRF, ArrayBlockingQueue<Packet> input) {
-		rf = theRF;
+	public reader(RF theRF, ArrayBlockingQueue<Packet> input, short ourMAC) {
+		this.rf = theRF;
 		this.input = input;
+		this.ourMAC = ourMAC;
 	}
 	 
 	 private void unpackIt(Packet packet) {
-		 if (packet.getDestAddress() == -1) {
+		 if (packet.getDestAddress() == -1 || packet.getDestAddress() == ourMAC) {
 			 try {
 				 this.input.put(packet);
 			} catch (InterruptedException e) {
