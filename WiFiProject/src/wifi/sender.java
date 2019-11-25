@@ -61,7 +61,6 @@ public class sender implements Runnable {
 		while(true) {
 			transmit(); 
 			
-			System.out.println(isAck);
 			if (!isAck && packet.getDestAddress() != -1) {								 //if not sending ack wait for ack
 				waitForAck();
 			}
@@ -102,11 +101,13 @@ public class sender implements Runnable {
 	}
 	
 	private void transmit() {
-		if(rf.inUse()) {  					  //if channel is busy change state to one
+		if(rf.inUse() && !isAck) {  					  //if channel is busy change state to one
 			 state = 1;
 		 }
 		 
-		 waitWhileBusy();						
+		 if(!isAck) {
+			 waitWhileBusy();	
+		 }
 		 
 		 waitIfs();
 		 
@@ -114,11 +115,14 @@ public class sender implements Runnable {
 			 state = 1;
 		 }
 		 
-		 waitWhileBusy();
+		 if(!isAck) {
+			 waitWhileBusy();	
+		 }
 		 
-		 slot = rand.nextInt(backoff);							//set slot to some random number
+		 slot = rand.nextInt(backoff + 1);							//set slot to some random number
 		 
 		 while (state == 1 && slot != 0) {							//if the channel was not idle wait additional time
+			 
 			 try {
 				Thread.sleep(slotTime);
 			} catch (InterruptedException e) {
@@ -134,6 +138,7 @@ public class sender implements Runnable {
 		 }
 		 
 		 rf.transmit(curpack); 				//send current packet
+		 state = 0;
 	}
 	
 	private void waitForAck() {
@@ -149,14 +154,16 @@ public class sender implements Runnable {
 				//curpack.
 				
 				transmit();
-				backoff = backoff *2;
 				numRetrys++;
+				backoff = (backoff * 2) + 1;
 			}
-			if(theAck.getSeqNum() == packet.getSeqNum()) {    //check if ack has correct sequence number
-				gotAck = true;
-				System.out.println("got");
+			if(theAck != null) {
+				if(theAck.getSeqNum() == packet.getSeqNum()) {    //check if ack has correct sequence number
+					gotAck = true;
+					System.out.println("got");
+				}
 			}
-			if(numRetrys == maxRetrys) {
+			if(numRetrys == maxRetrys) { 						 //checks if retry limit is met and moves to next packet if it is
 				gotAck = true;
 				System.out.println("aborted packet");
 			}

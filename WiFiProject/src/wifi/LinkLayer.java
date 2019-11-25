@@ -63,7 +63,6 @@ public class LinkLayer implements Dot11Interface
 		output.println("LinkLayer: Sending "+len+" bytes to "+dest); 
 		Packet pack = new Packet(0, calcNextSeqNum(dest), ourMAC, dest, data);
 		packetHolder.add(pack);
-		//theRF.transmit(data);
 		return len;
 	}
 
