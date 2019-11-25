@@ -33,7 +33,8 @@ public class sender implements Runnable {
 	private int backoff = rf.aCWmin;
 	private int slot = 0;
 	private int slotTime = rf.aSlotTime;
-	
+	private int maxRetrys = rf.dot11RetryLimit;
+	private int numRetrys = 0;
 	
 	@Override
 	public void run() {
@@ -59,7 +60,11 @@ public class sender implements Runnable {
 		 
 		while(true) {
 			transmit(); 
-			waitForAck();
+			
+			System.out.println(isAck);
+			if (!isAck && packet.getDestAddress() != -1) {								 //if not sending ack wait for ack
+				waitForAck();
+			}
 			 
 	    	try {
 				Thread.sleep(sleeper);
@@ -111,8 +116,9 @@ public class sender implements Runnable {
 		 
 		 waitWhileBusy();
 		 
+		 slot = rand.nextInt(backoff);							//set slot to some random number
+		 
 		 while (state == 1 && slot != 0) {							//if the channel was not idle wait additional time
-			 slot = rand.nextInt(backoff);
 			 try {
 				Thread.sleep(slotTime);
 			} catch (InterruptedException e) {
@@ -121,36 +127,40 @@ public class sender implements Runnable {
 			}
 			slot--;
 			
-			waitWhileBusy();
-			
-			waitIfs();	
-			
+			if (rf.inUse()) {
+				waitWhileBusy();
+				waitIfs();	
+			}			
 		 }
 		 
-		 rf.transmit(curpack); 				//send current packet and begin wait for an ack
+		 rf.transmit(curpack); 				//send current packet
 	}
 	
 	private void waitForAck() {
-		 if (!isAck || packet.getDestAddress() != -1) {								 //if not sending ack wait for ack
-			 while(!gotAck) {							 //wait for ack with the correct sequence number
-				 try {
-					theAck = this.acker.poll(timeout, TimeUnit.MILLISECONDS);         //start timer using poll to specify timeout
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				if(theAck == null) {							//if ack equals null there was a timeout and we should retransmit the packet and increase the contention window
-					//curpack.
-					
-					transmit();
-					backoff = backoff *2;
-				}
-				if(theAck.getSeqNum() == packet.getSeqNum()) {    //check if ack has correct sequence number
-					gotAck = true;
-					System.out.println("got");
-				}
-			 }
-		 }
+		 numRetrys = 0;
+		 while(!gotAck) {							 //wait for ack with the correct sequence number
+			 try {
+				theAck = this.acker.poll(timeout, TimeUnit.MILLISECONDS);         //start timer using poll to specify timeout
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			if(theAck == null) {							//if ack equals null there was a timeout and we should retransmit the packet and increase the contention window
+				//curpack.
+				
+				transmit();
+				backoff = backoff *2;
+				numRetrys++;
+			}
+			if(theAck.getSeqNum() == packet.getSeqNum()) {    //check if ack has correct sequence number
+				gotAck = true;
+				System.out.println("got");
+			}
+			if(numRetrys == maxRetrys) {
+				gotAck = true;
+				System.out.println("aborted packet");
+			}
+		 } 
 	}
 	
 }
