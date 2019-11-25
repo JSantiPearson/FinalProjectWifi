@@ -22,6 +22,7 @@ public class LinkLayer implements Dot11Interface
     // create object of ArrayBlockingQueue 
     ArrayBlockingQueue<Packet> packetHolder = new ArrayBlockingQueue<Packet>(1000);   
     ArrayBlockingQueue<Packet> packetHolderIn = new ArrayBlockingQueue<Packet>(1000);
+    ArrayBlockingQueue<Packet> ackHolder = new ArrayBlockingQueue<Packet>(1000);
     
 	/**
 	 * Constructor takes a MAC address and the PrintWriter to which our output will
@@ -32,12 +33,12 @@ public class LinkLayer implements Dot11Interface
 	public LinkLayer(short ourMAC, PrintWriter output) {
 		this.ourMAC = ourMAC;
 		this.output = output;
-		this.destSeqNums = new HashMap<Short, Short>();
 		output.println("LinkLayer: Constructor ran.");
+		this.destSeqNums = new HashMap<Short, Short>();
 		theRF = new RF(null, null);
-		sender send = new sender(theRF, packetHolder);
+		sender send = new sender(theRF, packetHolder, ackHolder);
 		(new Thread(send)).start();
-		read = new reader(theRF, packetHolderIn, ourMAC);
+		read = new reader(theRF, packetHolderIn, packetHolder, ackHolder, ourMAC);
 		(new Thread(read)).start();
 	}
 	
