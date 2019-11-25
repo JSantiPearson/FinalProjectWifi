@@ -30,6 +30,10 @@ public class sender implements Runnable {
 	private int sifs = rf.aSIFSTime;
 	private int difs = sifs + (rf.aSlotTime * 2);
 	private int ifs = 0;
+	private int backoff = rf.aCWmin;
+	private int slot = 0;
+	private int slotTime = rf.aSlotTime;
+	
 	
 	@Override
 	public void run() {
@@ -52,65 +56,12 @@ public class sender implements Runnable {
 		}
 			
 		int sleeper = rand.nextInt(69) + 1;
-		 while(true)
-	      {
-			 if(rf.inUse()) {  					  //if channel is busy change state to one
-				 state = 1;
-			 }
+		 
+		while(true) {
+			transmit(); 
+			waitForAck();
 			 
-			 while(rf.inUse()) {                  //sleep while channel is busy
-				 try {
-						Thread.sleep(20);
-				 } catch (InterruptedException e) {
-					e.printStackTrace();
-				 }
-			 }
-			 
-			 try {
-				Thread.sleep(ifs);
-			} catch (InterruptedException e1) {			//wait ifs depending 
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
-			 
-			 if(rf.inUse()) {  					  //if channel is busy change state to one
-				 state = 1;
-			 }
-			 
-			 while(rf.inUse()) {                  //sleep while channel is busy
-				 try {
-						Thread.sleep(20);
-				 } catch (InterruptedException e) {
-					e.printStackTrace();
-				 }
-			 }
-			 
-			 if (state == 1) {							//if the channel was not idle wait additional time
-				 
-			 }
-			 
-			 rf.transmit(curpack); 						 //send current packet and set state to 2
-			 state = 2;
-			 
-			 if (!isAck || packet.getDestAddress() != -1) {								 //if not sending ack wait for ack
-				 while(!gotAck) {							 //wait for ack with the correct sequence number
-					 try {
-						theAck = this.acker.poll(timeout, TimeUnit.MILLISECONDS);         //start timer using poll to specify timeout
-					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-					if(theAck == null) {							//if ack equals null there was a timeout and we should retransmit the packet and increase the contention window
-						rf.transmit(curpack);
-					}
-					if(theAck.getSeqNum() == packet.getSeqNum()) {    //check if ack has correct sequence number
-						gotAck = true;
-						System.out.println("got");
-					}
-				 }
-			 }
-			 
-	    	 try {
+	    	try {
 				Thread.sleep(sleeper);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
@@ -122,7 +73,84 @@ public class sender implements Runnable {
 				
 				e.printStackTrace();
 			}
-	      }
-		
+	     }
+			
 	}
+	
+	private void waitIfs() {
+		try {
+			Thread.sleep(ifs);
+		} catch (InterruptedException e1) {			//wait ifs either sifs or difs
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+	}
+	
+	private void waitWhileBusy() {
+		while(rf.inUse()) {                  //sleep while channel is busy
+			 try {
+					Thread.sleep(20);
+			 } catch (InterruptedException e) {
+				e.printStackTrace();
+			 }
+		 }
+	}
+	
+	private void transmit() {
+		if(rf.inUse()) {  					  //if channel is busy change state to one
+			 state = 1;
+		 }
+		 
+		 waitWhileBusy();						
+		 
+		 waitIfs();
+		 
+		 if(rf.inUse()) {  					  //if channel is busy change state to one
+			 state = 1;
+		 }
+		 
+		 waitWhileBusy();
+		 
+		 while (state == 1 && slot != 0) {							//if the channel was not idle wait additional time
+			 slot = rand.nextInt(backoff);
+			 try {
+				Thread.sleep(slotTime);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			slot--;
+			
+			waitWhileBusy();
+			
+			waitIfs();	
+			
+		 }
+		 
+		 rf.transmit(curpack); 				//send current packet and begin wait for an ack
+	}
+	
+	private void waitForAck() {
+		 if (!isAck || packet.getDestAddress() != -1) {								 //if not sending ack wait for ack
+			 while(!gotAck) {							 //wait for ack with the correct sequence number
+				 try {
+					theAck = this.acker.poll(timeout, TimeUnit.MILLISECONDS);         //start timer using poll to specify timeout
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				if(theAck == null) {							//if ack equals null there was a timeout and we should retransmit the packet and increase the contention window
+					//curpack.
+					
+					transmit();
+					backoff = backoff *2;
+				}
+				if(theAck.getSeqNum() == packet.getSeqNum()) {    //check if ack has correct sequence number
+					gotAck = true;
+					System.out.println("got");
+				}
+			 }
+		 }
+	}
+	
 }
