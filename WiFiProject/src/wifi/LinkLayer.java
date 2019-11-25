@@ -1,5 +1,6 @@
 package wifi;
 import java.io.PrintWriter;
+import java.util.HashMap;
 import java.util.concurrent.ArrayBlockingQueue;
 
 import rf.RF;
@@ -16,6 +17,7 @@ public class LinkLayer implements Dot11Interface
 	private PrintWriter output; // The output stream we'll write to
 	
 	public reader read;
+	HashMap<Short, Short> destSeqNums;
 
     // create object of ArrayBlockingQueue 
     ArrayBlockingQueue<Packet> packetHolder = new ArrayBlockingQueue<Packet>(1000);   
@@ -30,22 +32,35 @@ public class LinkLayer implements Dot11Interface
 	public LinkLayer(short ourMAC, PrintWriter output) {
 		this.ourMAC = ourMAC;
 		this.output = output;
+		this.destSeqNums = new HashMap<Short, Short>();
 		output.println("LinkLayer: Constructor ran.");
 		theRF = new RF(null, null);
 		sender send = new sender(theRF, packetHolder);
 		(new Thread(send)).start();
-		read = new reader(theRF, packetHolderIn);
+		read = new reader(theRF, packetHolderIn, ourMAC);
 		(new Thread(read)).start();
 	}
+	
+	
+	  public short calcNextSeqNum(short i) {
+	        short seqNum;
+	        if (this.destSeqNums.containsKey(i)) {
+	            seqNum = this.destSeqNums.get(i);
+	        }
+	        else {
+	        	seqNum = 0;
+	        }
+	        this.destSeqNums.put(i, (short)(seqNum + 1));
+	        return seqNum;
+	    }
 
 	/**
 	 * Send method takes a destination, a buffer (array) of data, and the number
 	 * of bytes to send.  See docs for full description.
 	 */
 	public int send(short dest, byte[] data, int len) {
-		short seq = 0;
 		output.println("LinkLayer: Sending "+len+" bytes to "+dest); 
-		Packet pack = new Packet(0, seq, ourMAC, dest, data);
+		Packet pack = new Packet(0, calcNextSeqNum(dest), ourMAC, dest, data);
 		packetHolder.add(pack);
 		//theRF.transmit(data);
 		return len;
@@ -60,11 +75,11 @@ public class LinkLayer implements Dot11Interface
 		while(true) {
 			 try {
 				 Packet packet = this.read.input.take();
-				 System.out.println("Test packet :" + packet);
 		         byte[] data = packet.getData();
 		         t.setSourceAddr(packet.getSourceAddress());
 		         t.setDestAddr(packet.getDestAddress());
 		         t.setBuf(data);
+		         System.out.println("Test packet :" + packet);
 		         return data.length;
 			 } catch (InterruptedException e) {
 				 e.printStackTrace();
