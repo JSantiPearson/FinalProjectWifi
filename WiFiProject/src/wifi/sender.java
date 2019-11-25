@@ -27,14 +27,21 @@ public class sender implements Runnable {
 		this.acker = acker;
 	}
 
+	@SuppressWarnings("static-access")
 	private int sifs = rf.aSIFSTime;
+	@SuppressWarnings("static-access")
 	private int difs = sifs + (rf.aSlotTime * 2);
 	private int ifs = 0;
+	@SuppressWarnings("static-access")
 	private int backoff = rf.aCWmin;
 	private int slot = 0;
+	@SuppressWarnings("static-access")
 	private int slotTime = rf.aSlotTime;
+	@SuppressWarnings("static-access")
 	private int maxRetrys = rf.dot11RetryLimit;
 	private int numRetrys = 0;
+	@SuppressWarnings("static-access")
+	private int maxBackoff = rf.aCWmax;
 	
 	@Override
 	public void run() {
@@ -55,8 +62,6 @@ public class sender implements Runnable {
 		else {
 			ifs = difs;
 		}
-			
-		int sleeper = rand.nextInt(69) + 1;
 		 
 		while(true) {
 			transmit(); 
@@ -66,7 +71,7 @@ public class sender implements Runnable {
 			}
 			 
 	    	try {
-				Thread.sleep(sleeper);
+				Thread.sleep(10);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -155,7 +160,12 @@ public class sender implements Runnable {
 				
 				transmit();
 				numRetrys++;
-				backoff = (backoff * 2) + 1;
+				if(backoff * 2 + 1 >= maxBackoff) {
+					backoff = maxBackoff;
+				}
+				else {					
+				    backoff = (backoff * 2) + 1;
+				}
 			}
 			if(theAck != null) {
 				if(theAck.getSeqNum() == packet.getSeqNum()) {    //check if ack has correct sequence number
