@@ -50,8 +50,7 @@ public class sender implements Runnable {
 			packet = output.take();
 			System.out.println(packet);
 			curpack = packet.packet;
-		} catch (InterruptedException e1) {
-			
+		} catch (InterruptedException e1) {			
 			e1.printStackTrace();
 		}
 		
@@ -78,8 +77,7 @@ public class sender implements Runnable {
 	    	 try {
 				packet = output.take();
 				curpack = packet.packet;
-			} catch (InterruptedException e) {
-				
+			} catch (InterruptedException e) {			
 				e.printStackTrace();
 			}
 	     }
@@ -90,7 +88,6 @@ public class sender implements Runnable {
 		try {
 			Thread.sleep(ifs);
 		} catch (InterruptedException e1) {			//wait ifs either sifs or difs
-			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
 	}
@@ -152,7 +149,6 @@ public class sender implements Runnable {
 			 try {
 				theAck = this.acker.poll(timeout, TimeUnit.MILLISECONDS);         //start timer using poll to specify timeout
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			if(theAck == null) {							//if ack equals null there was a timeout and we should retransmit the packet and increase the contention window
