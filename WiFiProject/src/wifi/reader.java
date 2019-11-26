@@ -32,6 +32,7 @@ public class reader implements Runnable {
 						this.acker.put(packet);
 				 }
 				 else {
+					 System.out.println("giving data up");
 					 this.input.put(packet);
 				 }
 			} catch (InterruptedException e) {
@@ -42,6 +43,7 @@ public class reader implements Runnable {
 		 if (packet.getDestAddress() == ourMAC) {													
 				ack = new Packet(1, packet.getSeqNum(), ourMAC, packet.getSourceAddress(), data);
 				output.add(ack);
+				System.out.println("adding ack");
 		}
 	}
 

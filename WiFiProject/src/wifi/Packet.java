@@ -44,6 +44,7 @@ public class Packet {
              throw new IllegalArgumentException("Packet size too large.");
          }
     	this.packet = new byte[10 + data.length];
+    	//1 := its a retransmission and 0 := not a retrans.
         this.setType(type);
         // this.setReTry(0); // Sets retry bit to 0 for default case.
         this.setSeqNum(seq);
@@ -85,10 +86,6 @@ public class Packet {
         }
         throw new IllegalArgumentException("Unknown message type");
     }
-	
-//	public void getReTry() {
-//		return (this.packet[0] )
-//	}
 	
 	public int getType() {
         return (this.packet[0] & 0xE0) >>> 5;

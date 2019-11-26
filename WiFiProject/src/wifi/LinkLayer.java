@@ -66,7 +66,6 @@ public class LinkLayer implements Dot11Interface
 		// Packet beacon = new Packet(1, , ourMac, dest, data);
 		
 		packetHolder.add(pack);
-		//theRF.transmit(data);
 		return len;
 	}
 

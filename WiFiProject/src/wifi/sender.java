@@ -27,14 +27,21 @@ public class sender implements Runnable {
 		this.acker = acker;
 	}
 
+	@SuppressWarnings("static-access")
 	private int sifs = rf.aSIFSTime;
+	@SuppressWarnings("static-access")
 	private int difs = sifs + (rf.aSlotTime * 2);
 	private int ifs = 0;
+	@SuppressWarnings("static-access")
 	private int backoff = rf.aCWmin;
 	private int slot = 0;
+	@SuppressWarnings("static-access")
 	private int slotTime = rf.aSlotTime;
+	@SuppressWarnings("static-access")
 	private int maxRetrys = rf.dot11RetryLimit;
 	private int numRetrys = 0;
+	@SuppressWarnings("static-access")
+	private int maxBackoff = rf.aCWmax;
 	
 	@Override
 	public void run() {
@@ -43,8 +50,7 @@ public class sender implements Runnable {
 			packet = output.take();
 			System.out.println(packet);
 			curpack = packet.packet;
-		} catch (InterruptedException e1) {
-			
+		} catch (InterruptedException e1) {			
 			e1.printStackTrace();
 		}
 		
@@ -55,27 +61,23 @@ public class sender implements Runnable {
 		else {
 			ifs = difs;
 		}
-			
-		int sleeper = rand.nextInt(69) + 1;
 		 
 		while(true) {
 			transmit(); 
 			
-			System.out.println(isAck);
 			if (!isAck && packet.getDestAddress() != -1) {								 //if not sending ack wait for ack
 				waitForAck();
 			}
 			 
 	    	try {
-				Thread.sleep(sleeper);
+				Thread.sleep(10);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
 	    	 try {
 				packet = output.take();
 				curpack = packet.packet;
-			} catch (InterruptedException e) {
-				
+			} catch (InterruptedException e) {			
 				e.printStackTrace();
 			}
 	     }
@@ -86,7 +88,6 @@ public class sender implements Runnable {
 		try {
 			Thread.sleep(ifs);
 		} catch (InterruptedException e1) {			//wait ifs either sifs or difs
-			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
 	}
@@ -102,11 +103,13 @@ public class sender implements Runnable {
 	}
 	
 	private void transmit() {
-		if(rf.inUse()) {  					  //if channel is busy change state to one
+		if(rf.inUse() && !isAck) {  					  //if channel is busy change state to one
 			 state = 1;
 		 }
 		 
-		 waitWhileBusy();						
+		 if(!isAck) {
+			 waitWhileBusy();	
+		 }
 		 
 		 waitIfs();
 		 
@@ -114,11 +117,14 @@ public class sender implements Runnable {
 			 state = 1;
 		 }
 		 
-		 waitWhileBusy();
+		 if(!isAck) {
+			 waitWhileBusy();	
+		 }
 		 
-		 slot = rand.nextInt(backoff);							//set slot to some random number
+		 slot = rand.nextInt(backoff + 1);							//set slot to some random number
 		 
 		 while (state == 1 && slot != 0) {							//if the channel was not idle wait additional time
+			 
 			 try {
 				Thread.sleep(slotTime);
 			} catch (InterruptedException e) {
@@ -134,6 +140,7 @@ public class sender implements Runnable {
 		 }
 		 
 		 rf.transmit(curpack); 				//send current packet
+		 state = 0;
 	}
 	
 	private void waitForAck() {
@@ -142,21 +149,27 @@ public class sender implements Runnable {
 			 try {
 				theAck = this.acker.poll(timeout, TimeUnit.MILLISECONDS);         //start timer using poll to specify timeout
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			if(theAck == null) {							//if ack equals null there was a timeout and we should retransmit the packet and increase the contention window
-				//curpack.
+				packet.setReTry(1);
 				
 				transmit();
-				backoff = backoff *2;
 				numRetrys++;
+				if(backoff * 2 + 1 >= maxBackoff) {
+					backoff = maxBackoff;
+				}
+				else {					
+				    backoff = (backoff * 2) + 1;
+				}
 			}
-			if(theAck.getSeqNum() == packet.getSeqNum()) {    //check if ack has correct sequence number
-				gotAck = true;
-				System.out.println("got");
+			if(theAck != null) {
+				if(theAck.getSeqNum() == packet.getSeqNum()) {    //check if ack has correct sequence number
+					gotAck = true;
+					System.out.println("got");
+				}
 			}
-			if(numRetrys == maxRetrys) {
+			if(numRetrys == maxRetrys) { 						 //checks if retry limit is met and moves to next packet if it is
 				gotAck = true;
 				System.out.println("aborted packet");
 			}
