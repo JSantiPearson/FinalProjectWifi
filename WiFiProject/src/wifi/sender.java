@@ -152,7 +152,7 @@ public class sender implements Runnable {
 				e.printStackTrace();
 			}
 			if(theAck == null) {							//if ack equals null there was a timeout and we should retransmit the packet and increase the contention window
-				//curpack.
+				packet.setReTry(1);
 				
 				transmit();
 				numRetrys++;

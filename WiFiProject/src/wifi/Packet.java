@@ -25,13 +25,28 @@ public class Packet {
         }
     }
     
+    public Packet(int type, int reTry, short seq, short src, short dest, byte[] data) {
+    	if (data.length > 2038) {
+    		throw new IllegalArgumentException("Packet size too large.");
+    	}
+    	this.packet = new byte[10 + data.length];
+    	this.setType(type);
+        this.setReTry(reTry);
+        this.setSeqNum(seq);
+        this.setDestAddress(dest);
+        this.setSourceAddress(src);
+        this.setData(data);
+        this.setChecksum();
+    }
+    
     public Packet(int type, short seq, short src, short dest, byte[] data) {
     	 if (data.length > 2038) {
              throw new IllegalArgumentException("Packet size too large.");
          }
     	this.packet = new byte[10 + data.length];
+    	//1 := its a retransmission and 0 := not a retrans.
         this.setType(type);
-        //this.setRetry(retry);
+        // this.setReTry(0); // Sets retry bit to 0 for default case.
         this.setSeqNum(seq);
         this.setDestAddress(dest);
         this.setSourceAddress(src);
@@ -50,6 +65,18 @@ public class Packet {
     	System.out.println(packet2);
     }
 
+    public void setReTry(int retry) {
+    	if (retry == 1) {
+    		this.packet[0] = (byte) (this.packet[0] << 1 | 1);
+    		return;
+    	}
+    	else if (retry == 0) {
+    		this.packet[0] = (byte) (this.packet[0] << 1);
+    		
+    	}
+    	throw new IllegalArgumentException("Not a valid retry bit.");
+    }
+    
 	public void setType(int type) {
         if (type >= DATA && type <= RTS && type != 3) {
             byte[] packet = this.packet;
