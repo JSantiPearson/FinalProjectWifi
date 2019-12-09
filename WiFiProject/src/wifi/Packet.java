@@ -29,7 +29,7 @@ public class Packet {
     	if (data.length > 2038) {
     		throw new IllegalArgumentException("Packet size too large.");
     	}
-    	this.packet = new byte[10 + data.length];
+    	this.packet = new byte[11 + data.length];
     	this.setType(type);
         this.setReTry(reTry);
         this.setSeqNum(seq);
@@ -43,10 +43,10 @@ public class Packet {
     	 if (data.length > 2038) {
              throw new IllegalArgumentException("Packet size too large.");
          }
-    	this.packet = new byte[10 + data.length];
+    	this.packet = new byte[11 + data.length];
     	//1 := its a retransmission and 0 := not a retrans.
         this.setType(type);
-        // this.setReTry(0); // Sets retry bit to 0 for default case.
+        this.setReTry(0);
         this.setSeqNum(seq);
         this.setDestAddress(dest);
         this.setSourceAddress(src);
@@ -67,11 +67,11 @@ public class Packet {
 
     public void setReTry(int retry) {
     	if (retry == 1) {
-    		this.packet[0] = (byte) (this.packet[0] << 1 | 1);
+    		this.packet[1] = (byte) (this.packet[1] << 1 | 1);
     		return;
     	}
     	else if (retry == 0) {
-    		this.packet[0] = (byte) (this.packet[0] << 1);
+    		this.packet[1] = (byte) (this.packet[1] << 1);
     		
     	}
     	throw new IllegalArgumentException("Not a valid retry bit.");
@@ -95,29 +95,29 @@ public class Packet {
         if (seqNum != (seqNum & 0xFFF)) {
             throw new IllegalArgumentException("Sequence number is not 12 bits.");
         }
-        this.packet[1] = (byte)(seqNum & 0xFF);
+        this.packet[2] = (byte)(seqNum & 0xFF);
     }
     
     public short getSeqNum() {
-        return this.translatorByteShort((byte)(this.packet[0] & 0xF), this.packet[1]);
+        return this.translatorByteShort((byte)(this.packet[0] & 0xF), this.packet[2]);
     }
     
     public void setDestAddress(short destAddress) {
-        this.packet[2] = (byte)(destAddress >>> 8 & 0xFF);
-        this.packet[3] = (byte)(destAddress & 0xFF);
+        this.packet[3] = (byte)(destAddress >>> 8 & 0xFF);
+        this.packet[4] = (byte)(destAddress & 0xFF);
     }
     
     public short getDestAddress() {
-        return this.translatorByteShort(this.packet[2], this.packet[3]);
+        return this.translatorByteShort(this.packet[3], this.packet[4]);
     }
     
     public void setSourceAddress(short sourceAddress) {
-        this.packet[4] = (byte)(sourceAddress >>> 8 & 0xFF);
-        this.packet[5] = (byte)(sourceAddress & 0xFF);
+        this.packet[5] = (byte)(sourceAddress >>> 8 & 0xFF);
+        this.packet[6] = (byte)(sourceAddress & 0xFF);
     }
     
     public short getSourceAddress() {
-        return this.translatorByteShort(this.packet[4], this.packet[5]);
+        return this.translatorByteShort(this.packet[5], this.packet[6]);
     }
     
     public void setData(byte[] data) {
@@ -125,14 +125,14 @@ public class Packet {
             throw new IllegalArgumentException("Too much data to put in the packet.");
             }
         for (int i = 0; i < data.length; ++i) {
-            this.packet[6 + i] = data[i];
+            this.packet[7 + i] = data[i];
         }
     }
     
     public byte[] getData() {
         final byte[] data = new byte[this.packet.length - 10];
         for (int i = 0; i < data.length; ++i) {
-            data[i] = this.packet[6 + i];
+            data[i] = this.packet[7 + i];
         }
         return data;
     }
