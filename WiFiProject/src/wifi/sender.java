@@ -55,7 +55,9 @@ public class sender implements Runnable {
 		while(true) {
 			transmit(); 
 
-			waitForAck();
+			if (packet.getDestAddress() != -1) {
+				waitForAck();
+			}
 			 
 	    	try {
 				Thread.sleep(10);
@@ -141,8 +143,8 @@ public class sender implements Runnable {
 			}
 			if(theAck == null) {							//if ack equals null there was a timeout and we should retransmit the packet and increase the contention window
 				packet.setReTry(1);
-				
-				transmit();
+				System.out.println("resending");
+				System.out.println(packet);
 				numRetrys++;
 				if(backoff * 2 + 1 >= maxBackoff) {
 					backoff = maxBackoff;
@@ -150,21 +152,17 @@ public class sender implements Runnable {
 				else {					
 				    backoff = (backoff * 2) + 1;
 				}
+				transmit();
 			}
 			if(theAck != null) {
 				if(theAck.getSeqNum() == packet.getSeqNum()) {    //check if ack has correct sequence number
-					System.out.println(theAck.getSeqNum());
-					System.out.println(packet.getSeqNum());
 					gotAck = true;
-					System.out.println("got");
-					System.out.println(gotAck);
 				}
 			}
 			else if(numRetrys == maxRetrys) { 						 //checks if retry limit is met and moves to next packet if it is
 				gotAck = true;
 				System.out.println("aborted packet");
 			}
-			System.out.println("done");
 		 } 
 	}
 	
