@@ -18,7 +18,6 @@ public class sender implements Runnable {
 	private boolean gotAck = false;
 	private long timeout = 6000;
 	private int state = 0;
-	private boolean isAck = false;
 	private Packet theAck;
 	
 	public sender(RF theRF, ArrayBlockingQueue<Packet> output, ArrayBlockingQueue<Packet> acker) {
@@ -30,8 +29,7 @@ public class sender implements Runnable {
 	@SuppressWarnings("static-access")
 	private int sifs = rf.aSIFSTime;
 	@SuppressWarnings("static-access")
-	private int difs = sifs + (rf.aSlotTime * 2);
-	private int ifs = 0;
+	private int ifs = sifs + (rf.aSlotTime * 2);
 	@SuppressWarnings("static-access")
 	private int backoff = rf.aCWmin;
 	private int slot = 0;
@@ -53,21 +51,11 @@ public class sender implements Runnable {
 		} catch (InterruptedException e1) {			
 			e1.printStackTrace();
 		}
-		
-		if (packet.getType() == 1) {			 //if of type ack set ifs to to sifs, else set to difs
-			ifs = sifs;
-			isAck = true;
-		}
-		else {
-			ifs = difs;
-		}
 		 
 		while(true) {
 			transmit(); 
-			
-			if (!isAck && packet.getDestAddress() != -1) {								 //if not sending ack wait for ack
-				waitForAck();
-			}
+
+			waitForAck();
 			 
 	    	try {
 				Thread.sleep(10);
@@ -77,6 +65,9 @@ public class sender implements Runnable {
 	    	 try {
 				packet = output.take();
 				curpack = packet.packet;
+				gotAck = false;
+				System.out.println("next packet");
+				numRetrys = 0;
 			} catch (InterruptedException e) {			
 				e.printStackTrace();
 			}
@@ -103,23 +94,20 @@ public class sender implements Runnable {
 	}
 	
 	private void transmit() {
-		if(rf.inUse() && !isAck) {  					  //if channel is busy change state to one
+		if(rf.inUse()) {  					  //if channel is busy change state to one
 			 state = 1;
 		 }
 		 
-		 if(!isAck) {
-			 waitWhileBusy();	
-		 }
-		 
+		 waitWhileBusy();	
+
 		 waitIfs();
 		 
 		 if(rf.inUse()) {  					  //if channel is busy change state to one
 			 state = 1;
-		 }
-		 
-		 if(!isAck) {
-			 waitWhileBusy();	
-		 }
+		 }		 
+
+		 waitWhileBusy();	
+
 		 
 		 slot = rand.nextInt(backoff + 1);							//set slot to some random number
 		 
@@ -165,14 +153,18 @@ public class sender implements Runnable {
 			}
 			if(theAck != null) {
 				if(theAck.getSeqNum() == packet.getSeqNum()) {    //check if ack has correct sequence number
+					System.out.println(theAck.getSeqNum());
+					System.out.println(packet.getSeqNum());
 					gotAck = true;
 					System.out.println("got");
+					System.out.println(gotAck);
 				}
 			}
-			if(numRetrys == maxRetrys) { 						 //checks if retry limit is met and moves to next packet if it is
+			else if(numRetrys == maxRetrys) { 						 //checks if retry limit is met and moves to next packet if it is
 				gotAck = true;
 				System.out.println("aborted packet");
 			}
+			System.out.println("done");
 		 } 
 	}
 	
