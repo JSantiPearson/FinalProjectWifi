@@ -29,7 +29,7 @@ public class Packet {
     	if (data.length > 2038) {
     		throw new IllegalArgumentException("Packet size too large.");
     	}
-    	this.packet = new byte[11 + data.length];
+    	this.packet = new byte[10 + data.length];
     	this.setType(type);
         this.setReTry(reTry);
         this.setSeqNum(seq);
@@ -43,7 +43,7 @@ public class Packet {
     	 if (data.length > 2038) {
              throw new IllegalArgumentException("Packet size too large.");
          }
-    	this.packet = new byte[11 + data.length];
+    	this.packet = new byte[10 + data.length];
         this.setType(type);
         this.setReTry(0);
         this.setSeqNum(seq);
