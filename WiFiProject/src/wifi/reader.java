@@ -16,6 +16,8 @@ public class reader implements Runnable {
 	private short ourMAC;
 	private Packet ack;
 	private byte[] data = new byte[0];
+	@SuppressWarnings("static-access")
+	private int sifs = rf.aSIFSTime;
 	
 	public reader(RF theRF, ArrayBlockingQueue<Packet> input, ArrayBlockingQueue<Packet> output, ArrayBlockingQueue<Packet> acker, short ourMAC) {
 		this.rf = theRF;
@@ -40,10 +42,12 @@ public class reader implements Runnable {
 			}
 		 }
 		 
-		 if (packet.getDestAddress() == ourMAC) {													
+		 if (packet.getDestAddress() == ourMAC && packet.getType() == 0) {													
 				ack = new Packet(1, packet.getSeqNum(), ourMAC, packet.getSourceAddress(), data);
-				output.add(ack);
-				System.out.println("adding ack");
+				byte[] ackp = ack.packet;
+				waitSifs();
+				System.out.println("waited");
+				rf.transmit(ackp);
 		}
 	}
 
@@ -54,7 +58,15 @@ public class reader implements Runnable {
 			byte[] packetBytes = rf.receive();
 			Packet packet = new Packet(packetBytes);
 			this.unpackIt(packet);
-		}
-		
+		}		
 	}
+	
+	private void waitSifs() {
+		try {
+			Thread.sleep(sifs);
+		} catch (InterruptedException e1) {			//wait ifs either sifs or difs
+			e1.printStackTrace();
+		}
+	}
+	
 }
