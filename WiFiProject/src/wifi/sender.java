@@ -109,25 +109,10 @@ public class sender implements Runnable {
 		 }		 
 
 		 waitWhileBusy();	
-
 		 
-		 slot = rand.nextInt(backoff + 1);							//set slot to some random number
-		 
-		 while (state == 1 && slot != 0) {							//if the channel was not idle wait additional time
-			 
-			 try {
-				Thread.sleep(slotTime);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			slot--;
-			
-			if (rf.inUse()) {
-				waitWhileBusy();
-				waitIfs();	
-			}			
-		 }
+		 if(state == 1) {
+			 backoff();
+		 }		 
 		 
 		 rf.transmit(curpack); 				//send current packet
 		 state = 0;
@@ -152,6 +137,7 @@ public class sender implements Runnable {
 				else {					
 				    backoff = (backoff * 2) + 1;
 				}
+				System.out.println("new boff" + backoff);
 				transmit();
 			}
 			if(theAck != null) {
@@ -164,6 +150,29 @@ public class sender implements Runnable {
 				System.out.println("aborted packet");
 			}
 		 } 
+	}
+	
+	private void backoff() {
+		slot = rand.nextInt(backoff + 1);							//set slot to some random number
+		 
+		System.out.println(slot);
+		 while (state == 1 && slot != 0) {							//if the channel was not idle wait additional time
+			 System.out.println("exponential backoff");
+			 System.out.println(state);
+			 System.out.println("slot:" + slot);
+			 try {
+				Thread.sleep(slotTime);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			slot--;
+			
+			if (rf.inUse()) {
+				waitWhileBusy();
+				waitIfs();	
+			}			
+		 }
 	}
 	
 }

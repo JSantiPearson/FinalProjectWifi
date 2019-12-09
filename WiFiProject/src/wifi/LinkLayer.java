@@ -61,7 +61,7 @@ public class LinkLayer implements Dot11Interface
 	 */
 	public int send(short dest, byte[] data, int len) {
 		output.println("LinkLayer: Sending "+len+" bytes to "+dest); 
-		Packet pack = new Packet(0, calcNextSeqNum(dest), ourMAC, dest, data);
+		Packet pack = new Packet(0, 0, calcNextSeqNum(dest), ourMAC, dest, data);
 		
 		// Packet beacon = new Packet(1, , ourMac, dest, data);
 		
