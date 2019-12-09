@@ -43,7 +43,7 @@ public class reader implements Runnable {
 		 }
 		 
 		 if (packet.getDestAddress() == ourMAC && packet.getType() == 0) {													
-				ack = new Packet(1, packet.getSeqNum(), ourMAC, packet.getSourceAddress(), data);
+				ack = new Packet(1, 0, packet.getSeqNum(), ourMAC, packet.getSourceAddress(), data);
 				byte[] ackp = ack.packet;
 				waitSifs();
 				System.out.println("waited");
