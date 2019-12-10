@@ -23,6 +23,7 @@ public class LinkLayer implements Dot11Interface
     ArrayBlockingQueue<Packet> packetHolder = new ArrayBlockingQueue<Packet>(1000);   
     ArrayBlockingQueue<Packet> packetHolderIn = new ArrayBlockingQueue<Packet>(1000);
     ArrayBlockingQueue<Packet> ackHolder = new ArrayBlockingQueue<Packet>(1000);
+    ArrayBlockingQueue<Packet> limiter = new ArrayBlockingQueue<Packet>(1000);
     
 	/**
 	 * Constructor takes a MAC address and the PrintWriter to which our output will
@@ -36,7 +37,7 @@ public class LinkLayer implements Dot11Interface
 		output.println("LinkLayer: Constructor ran.");
 		this.destSeqNums = new HashMap<Short, Short>();
 		theRF = new RF(null, null);
-		sender send = new sender(theRF, packetHolder, ackHolder);
+		sender send = new sender(theRF, packetHolder, ackHolder, limiter);
 		(new Thread(send)).start();
 		read = new reader(theRF, packetHolderIn, packetHolder, ackHolder, ourMAC);
 		(new Thread(read)).start();
@@ -60,13 +61,14 @@ public class LinkLayer implements Dot11Interface
 	 * of bytes to send.  See docs for full description.
 	 */
 	public int send(short dest, byte[] data, int len) {
-		if (packetHolder.size() <= 4) {
+		if (limiter.size() < 4) {
 			output.println("LinkLayer: Sending "+len+" bytes to "+dest); 
 			Packet pack = new Packet(0, 0, calcNextSeqNum(dest), ourMAC, dest, data);
 			
 			// Packet beacon = new Packet(1, , ourMac, dest, data);
 			
 			packetHolder.add(pack);
+			limiter.add(pack);
 			return len;
 		}
 		else {
