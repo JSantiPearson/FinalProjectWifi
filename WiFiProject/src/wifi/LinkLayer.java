@@ -60,13 +60,18 @@ public class LinkLayer implements Dot11Interface
 	 * of bytes to send.  See docs for full description.
 	 */
 	public int send(short dest, byte[] data, int len) {
-		output.println("LinkLayer: Sending "+len+" bytes to "+dest); 
-		Packet pack = new Packet(0, 0, calcNextSeqNum(dest), ourMAC, dest, data);
-		
-		// Packet beacon = new Packet(1, , ourMac, dest, data);
-		
-		packetHolder.add(pack);
-		return len;
+		if (packetHolder.size() <= 4) {
+			output.println("LinkLayer: Sending "+len+" bytes to "+dest); 
+			Packet pack = new Packet(0, 0, calcNextSeqNum(dest), ourMAC, dest, data);
+			
+			// Packet beacon = new Packet(1, , ourMac, dest, data);
+			
+			packetHolder.add(pack);
+			return len;
+		}
+		else {
+			return 0;
+		}
 	}
 
 	/**
