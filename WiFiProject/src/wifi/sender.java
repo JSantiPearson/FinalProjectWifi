@@ -68,6 +68,7 @@ public class sender implements Runnable {
 				packet = output.take();
 				curpack = packet.packet;
 				gotAck = false;
+				state = 0;
 				System.out.println("next packet");
 				numRetrys = 0;
 			} catch (InterruptedException e) {			
@@ -115,7 +116,6 @@ public class sender implements Runnable {
 		 }		 
 		 
 		 rf.transmit(curpack); 				//send current packet
-		 state = 0;
 	}
 	
 	private void waitForAck() {
@@ -131,6 +131,7 @@ public class sender implements Runnable {
 				System.out.println("resending");
 				System.out.println(packet);
 				numRetrys++;
+				state = 1;
 				if(backoff * 2 + 1 >= maxBackoff) {
 					backoff = maxBackoff;
 				}
