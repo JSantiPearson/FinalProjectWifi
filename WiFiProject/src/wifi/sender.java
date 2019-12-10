@@ -12,6 +12,7 @@ public class sender implements Runnable {
 	private RF rf;
 	ArrayBlockingQueue<Packet> output;
 	ArrayBlockingQueue<Packet> acker;
+	ArrayBlockingQueue<Packet> limit;
 	private Packet packet;
 	Random rand = new Random();
 	private byte[] curpack;
@@ -20,10 +21,11 @@ public class sender implements Runnable {
 	private int state = 0;
 	private Packet theAck;
 	
-	public sender(RF theRF, ArrayBlockingQueue<Packet> output, ArrayBlockingQueue<Packet> acker) {
+	public sender(RF theRF, ArrayBlockingQueue<Packet> output, ArrayBlockingQueue<Packet> acker, ArrayBlockingQueue<Packet> limiter) {
 		rf = theRF;
 		this.output = output;
 		this.acker = acker;
+		this.limit = limiter;
 	}
 
 	@SuppressWarnings("static-access")
@@ -58,7 +60,9 @@ public class sender implements Runnable {
 			if (packet.getDestAddress() != -1) {
 				waitForAck();
 			}
-			 
+			
+			limit.remove();                //if packet was acked remove from limiter
+			
 	    	try {
 				Thread.sleep(10);
 			} catch (InterruptedException e) {
