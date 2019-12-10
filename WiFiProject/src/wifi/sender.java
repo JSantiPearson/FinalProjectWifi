@@ -68,6 +68,7 @@ public class sender implements Runnable {
 				packet = output.take();
 				curpack = packet.packet;
 				gotAck = false;
+				state = 0;
 				System.out.println("next packet");
 				numRetrys = 0;
 			} catch (InterruptedException e) {			
@@ -115,7 +116,6 @@ public class sender implements Runnable {
 		 }		 
 		 
 		 rf.transmit(curpack); 				//send current packet
-		 state = 0;
 	}
 	
 	private void waitForAck() {
@@ -154,7 +154,7 @@ public class sender implements Runnable {
 	
 	private void backoff() {
 		slot = rand.nextInt(backoff + 1);							//set slot to some random number
-		 
+		state = 1;
 		System.out.println(slot);
 		 while (state == 1 && slot != 0) {							//if the channel was not idle wait additional time
 			 System.out.println("exponential backoff");
@@ -171,7 +171,8 @@ public class sender implements Runnable {
 			if (rf.inUse()) {
 				waitWhileBusy();
 				waitIfs();	
-			}			
+			}	
+			System.out.println(rf.clock());
 		 }
 	}
 	
