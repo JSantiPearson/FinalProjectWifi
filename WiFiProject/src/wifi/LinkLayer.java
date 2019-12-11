@@ -12,12 +12,22 @@ import rf.RF;
  */
 public class LinkLayer implements Dot11Interface 
 {
+	public static final int SUCCESS = 1;
+    public static final int UNSPECIFIED_ERROR = 2;
+    public static final int RF_INIT_FAILED = 3;
+    public static final int TX_DELIVERED = 4;
+    public static final int TX_FAILED = 5;
+    public static final int BAD_ADDRESS = 7;
+    public static final int ILLEGAL_ARGUMENT = 9;
+    public static final int INSUFFICIENT_BUFFER_SPACE = 10;
+	
 	private RF theRF;           // You'll need one of these eventually
 	private short ourMAC;       // Our MAC address
 	private PrintWriter output; // The output stream we'll write to
 	
 	public boolean maxCollisionWindow;
 	private int debug;
+	private int statusCode;
 	
 	public reader read;
 	HashMap<Short, Short> destSeqNums;
@@ -64,6 +74,13 @@ public class LinkLayer implements Dot11Interface
 	 * of bytes to send.  See docs for full description.
 	 */
 	public int send(short dest, byte[] data, int len) {
+		if (data.length < len) {
+			this.statusCode = ILLEGAL_ARGUMENT;
+		}
+		if (this.packetHolder.size() >= 4) {
+            System.out.println("Send ignored, too many outgoing packets.");
+            return 0;
+        }
 		if (limiter.size() < 4) {
 			output.println("LinkLayer: Sending "+len+" bytes to "+dest); 
 			Packet pack = new Packet(0, 0, calcNextSeqNum(dest), ourMAC, dest, data);
@@ -72,6 +89,7 @@ public class LinkLayer implements Dot11Interface
 			
 			packetHolder.add(pack);
 			limiter.add(pack);
+			this.statusCode = SUCCESS;
 			return len;
 		}
 		else {
@@ -89,12 +107,14 @@ public class LinkLayer implements Dot11Interface
 			 try {
 				 Packet packet = this.read.input.take();
 		         byte[] data = packet.getData();
+		         this.statusCode = SUCCESS;
 		         t.setSourceAddr(packet.getSourceAddress());
 		         t.setDestAddr(packet.getDestAddress());
 		         t.setBuf(data);
 		         System.out.println("Test packet :" + packet);
 		         return data.length;
 			 } catch (InterruptedException e) {
+				 System.out.println("Something went wrong with the incoming data.");
 				 e.printStackTrace();
 			 }  
 	      }
@@ -105,8 +125,7 @@ public class LinkLayer implements Dot11Interface
 	 * Returns a current status code.  See docs for full description.
 	 */
 	public int status() {
-		output.println("LinkLayer: Faking a status() return value of 0");
-		return 0;
+		return this.statusCode;
 	}
 
 	/**
