@@ -17,7 +17,6 @@ public class sender implements Runnable {
 	Random rand = new Random();
 	private byte[] curpack;
 	private boolean gotAck = false;
-	private long timeout = 6000;
 	private int state = 0;
 	private Packet theAck;
 	
@@ -43,6 +42,8 @@ public class sender implements Runnable {
 	@SuppressWarnings("static-access")
 	private int maxBackoff = rf.aCWmax;
 	
+	private long timeout = 1120 + sifs + slotTime;					//computed using the average time it takes to send an ack plus 
+	
 	@Override
 	public void run() {
 		System.out.println("Writer is alive and well");
@@ -56,10 +57,15 @@ public class sender implements Runnable {
 		 
 		while(true) {
 			transmit(); 
+			long time = rf.clock();
+			System.out.println(time);
+			
 
 			if (packet.getDestAddress() != -1) {
 				waitForAck();
 			}
+			long diff = rf.clock() - time;
+			System.out.println(diff);
 			
 			limit.remove();                //if packet was acked remove from limiter
 			
@@ -68,7 +74,7 @@ public class sender implements Runnable {
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-	    	 try {
+	    	try {
 				packet = output.take();
 				curpack = packet.packet;
 				gotAck = false;
@@ -85,9 +91,10 @@ public class sender implements Runnable {
 	private void waitIfs() {
 		try {
 			Thread.sleep(ifs);
-		} catch (InterruptedException e1) {			//wait ifs either sifs or difs
+		} catch (InterruptedException e1) {			//wait difs
 			e1.printStackTrace();
 		}
+		roundTo50(rf.clock(), rf);					//round up to nearest 50 ms
 	}
 	
 	private void waitWhileBusy() {
@@ -105,7 +112,7 @@ public class sender implements Runnable {
 			 state = 1;
 		 }
 		 
-		 waitWhileBusy();	
+		 waitWhileBusy();						//wait while busy
 
 		 waitIfs();
 		 
@@ -136,7 +143,7 @@ public class sender implements Runnable {
 				System.out.println(packet);
 				numRetrys++;
 				state = 1;
-				if(backoff * 2 + 1 >= maxBackoff) {
+				if(backoff * 2 + 1 >= maxBackoff) {			//increase the collision window
 					backoff = maxBackoff;
 				}
 				else {					
@@ -171,6 +178,7 @@ public class sender implements Runnable {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+			roundTo50(rf.clock(), rf);
 			slot--;
 			
 			if (rf.inUse()) {
@@ -180,12 +188,18 @@ public class sender implements Runnable {
 		 }
 	}
 	
-	private static long roundTo50(long time) {
+	private static void roundTo50(long time, RF rf) {				//code for rounding to nearest 50 ms
 		long offset = time % 50;
 		long off = Math.abs(50 - offset);
-		long newTime = time + off;
+		//long newTime = time + off;
 		
-		return newTime;
+		 try {
+			Thread.sleep(off);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		//System.out.println(rf.clock());
 	}
 	
 }
