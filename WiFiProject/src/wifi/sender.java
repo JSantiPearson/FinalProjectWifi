@@ -180,4 +180,12 @@ public class sender implements Runnable {
 		 }
 	}
 	
+	private static long roundTo50(long time) {
+		long offset = time % 50;
+		long off = Math.abs(50 - offset);
+		long newTime = time + off;
+		
+		return newTime;
+	}
+	
 }
