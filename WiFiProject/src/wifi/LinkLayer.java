@@ -16,6 +16,9 @@ public class LinkLayer implements Dot11Interface
 	private short ourMAC;       // Our MAC address
 	private PrintWriter output; // The output stream we'll write to
 	
+	public boolean maxCollisionWindow;
+	private int debug;
+	
 	public reader read;
 	HashMap<Short, Short> destSeqNums;
 
@@ -109,8 +112,56 @@ public class LinkLayer implements Dot11Interface
 	/**
 	 * Passes command info to your link layer.  See docs for full description.
 	 */
-	public int command(int cmd, int val) {
-		output.println("LinkLayer: Sending command "+cmd+" with value "+val);
+	public int command(int cmnd, int value) {
+		switch (cmnd) {
+			case 0: {
+				System.out.println("------------ Commands and Settings -------------");
+				System.out.println("Cmd #0: Display command options and current settings");
+				System.out.println("Cmd #1: Set debug level.  Currently at " + this.debug + "\n		  Use -1 for full debug output, 0 for no output");
+				String collision;
+				if (this.maxCollisionWindow) {
+					collision = "max";
+				}
+				else {
+					collision = "random";
+				}
+				System.out.println("Cmd #2: Set slot selection method.  Currently " + collision + "\n		  Use 0 for random slot selection, any other value to use maxCW");
+				System.out.println("Cmd #3: Set beacon interval.  Currently at " + "*beacon interval goes here*" + " seconds" + "\n		  Value specifies seconds between the start of beacons; -1 disables");
+				System.out.println("------------------------------------------------");
+				return 0;
+			}
+			case 1: {
+				int prevDebug = this.debug;
+				this.debug = value;
+				System.out.println("Setting debug to " + value);
+				return prevDebug;
+			}
+			case 2: {
+				if (value != 0) {
+					this.maxCollisionWindow = true;
+				}
+				else {
+					this.maxCollisionWindow = false;
+				}
+				if (this.maxCollisionWindow) {
+					System.out.println("Using the maximum Collision Window value each time");
+					return 0;
+				}
+				System.out.println("Using a random Collision Window value each time");
+				return 0;
+			}
+			case 3: {
+				if (value < 0) {
+					System.out.println("Beacon frames will never be sent");
+					//disable beacon frames here
+					return 0;
+				}
+				System.out.println("Beacon frames will be sent every " + value + " seconds");
+				//set beacon frames here
+				return 0;
+			}
+		}
+		System.out.println("Unknown command: " + cmnd);
 		return 0;
 	}
 }
