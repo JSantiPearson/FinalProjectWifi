@@ -87,19 +87,20 @@ public class LinkLayer implements Dot11Interface
 		output.println("LinkLayer: Pretending to block on recv()");
 		while(true) {
 			 try {
-				 Packet packet = this.read.input.take();
-		         byte[] data = packet.getData();
-		         t.setSourceAddr(packet.getSourceAddress());
-		         t.setDestAddr(packet.getDestAddress());
-		         t.setBuf(data);
-		         System.out.println("Test packet :" + packet);
-		         return data.length;
+				 if(packetHolderIn.size() < 4) {						//if 4 packets are queued we wont add the next one
+					 Packet packet = this.read.input.take();
+			         byte[] data = packet.getData();
+			         t.setSourceAddr(packet.getSourceAddress());
+			         t.setDestAddr(packet.getDestAddress());
+			         t.setBuf(data);
+			         System.out.println(packet);
+			         return data.length;
+				 }
 			 } catch (InterruptedException e) {
 				 e.printStackTrace();
 			 }  
 	      }
-	 } // <--- This is a REALLY bad way to wait.  Sleep a little each time through.
-		// return 0;
+	 } 
 
 	/**
 	 * Returns a current status code.  See docs for full description.
