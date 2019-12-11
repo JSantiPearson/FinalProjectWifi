@@ -28,6 +28,8 @@ public class reader implements Runnable {
 	}
 	 
 	 private void unpackIt(Packet packet) {
+		 long time = rf.clock();
+		 System.out.println(time);
 		 if (packet.getDestAddress() == -1 || packet.getDestAddress() == ourMAC) {
 			 try {
 				 if (packet.getType() == 1) {
@@ -42,12 +44,13 @@ public class reader implements Runnable {
 			}
 		 }
 		 
-		 if (packet.getDestAddress() == ourMAC && packet.getType() == 0) {													
+		 if (packet.getDestAddress() == ourMAC && packet.getType() == 0) {	
 				ack = new Packet(1, 0, packet.getSeqNum(), ourMAC, packet.getSourceAddress(), data);
 				byte[] ackp = ack.packet;
 				waitSifs();
-				System.out.println("waited");
 				rf.transmit(ackp);
+				long diff = rf.clock() - time;
+				System.out.println(diff);
 		}
 	}
 
@@ -67,6 +70,20 @@ public class reader implements Runnable {
 		} catch (InterruptedException e1) {			//wait ifs either sifs or difs
 			e1.printStackTrace();
 		}
+		roundTo50(rf.clock(), rf);
 	}
 	
+	private static void roundTo50(long time, RF rf) {
+		long offset = time % 50;
+		long off = Math.abs(50 - offset);
+		//long newTime = time + off;
+		
+		 try {
+			Thread.sleep(off);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		System.out.println(rf.clock());
+	}
 }
