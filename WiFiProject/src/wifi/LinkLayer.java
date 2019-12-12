@@ -83,7 +83,7 @@ public class LinkLayer implements Dot11Interface
         }
 		if (limiter.size() < 4) {
 			if(debug == 1) {
-				output.println("Queuing "+len+" bytes for "+dest);
+			output.println("Queuing "+len+" bytes for "+dest);
 			}
 			Packet pack = new Packet(0, 0, calcNextSeqNum(dest), ourMAC, dest, data);
 			
