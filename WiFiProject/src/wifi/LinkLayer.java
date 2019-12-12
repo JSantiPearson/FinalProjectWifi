@@ -160,12 +160,13 @@ public class LinkLayer implements Dot11Interface
 				return prevDebug;
 			}
 			case 2: {
-				if (value != 0) {
+				/*if (value != 0) {
 					this.maxCollisionWindow = true;
 				}
 				else {
 					this.maxCollisionWindow = false;
-				}
+				}*/
+				setCollisionWindow(value);
 				if (this.maxCollisionWindow) {
 					System.out.println("Using the maximum Collision Window value each time");
 					return 0;
@@ -186,5 +187,13 @@ public class LinkLayer implements Dot11Interface
 		}
 		System.out.println("Unknown command: " + cmnd);
 		return 0;
+	}
+	
+	public synchronized void setCollisionWindow(int max) {
+		if (max != 0) {
+			maxCollisionWindow = true;
+		}else {
+			maxCollisionWindow = false;
+		}
 	}
 }

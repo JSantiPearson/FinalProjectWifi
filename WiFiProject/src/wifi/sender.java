@@ -64,6 +64,7 @@ public class sender implements Runnable {
 		 
 		while(true) {
 			System.out.println(debug);
+			System.out.println(max);
 			//if(debug == 1) {
 				writer.println("Starting collision window at " + curpack.length + " bytes for " + packet.getDestAddress());   
 			//}
