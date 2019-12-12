@@ -50,9 +50,9 @@ public class LinkLayer implements Dot11Interface
 		output.println("LinkLayer: Constructor ran.");
 		this.destSeqNums = new HashMap<Short, Short>();
 		theRF = new RF(null, null);
-		sender send = new sender(theRF, packetHolder, ackHolder, limiter, maxCollisionWindow, debug);
+		sender send = new sender(theRF, packetHolder, ackHolder, limiter, maxCollisionWindow, debug, output);
 		(new Thread(send)).start();
-		read = new reader(theRF, packetHolderIn, packetHolder, ackHolder, ourMAC, debug);
+		read = new reader(theRF, packetHolderIn, packetHolder, ackHolder, ourMAC, debug, output);
 		(new Thread(read)).start();
 	}
 	
@@ -82,7 +82,9 @@ public class LinkLayer implements Dot11Interface
             return 0;
         }
 		if (limiter.size() < 4) {
-			output.println("LinkLayer: Sending "+len+" bytes to "+dest); 
+			if(debug == 1) {
+				output.println("Queuing "+len+" bytes for "+dest);
+			}
 			Packet pack = new Packet(0, 0, calcNextSeqNum(dest), ourMAC, dest, data);
 			
 			// Packet beacon = new Packet(1, , ourMac, dest, data);
@@ -154,7 +156,7 @@ public class LinkLayer implements Dot11Interface
 			case 1: {
 				int prevDebug = this.debug;
 				this.debug = value;
-				System.out.println("Setting debug to " + value);
+				output.println("Setting debug to " + value);
 				return prevDebug;
 			}
 			case 2: {

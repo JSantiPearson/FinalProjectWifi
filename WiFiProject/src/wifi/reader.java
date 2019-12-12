@@ -2,6 +2,7 @@
 
 package wifi;
 
+import java.io.PrintWriter;
 import java.util.concurrent.ArrayBlockingQueue;
 
 import rf.RF;
@@ -19,20 +20,22 @@ public class reader implements Runnable {
 	@SuppressWarnings("static-access")
 	private int sifs = rf.aSIFSTime;
 	private int debug;
+	private PrintWriter writer;
 	
-	public reader(RF theRF, ArrayBlockingQueue<Packet> input, ArrayBlockingQueue<Packet> output, ArrayBlockingQueue<Packet> acker, short ourMAC, int debug) {
+	public reader(RF theRF, ArrayBlockingQueue<Packet> input, ArrayBlockingQueue<Packet> output, ArrayBlockingQueue<Packet> acker, short ourMAC, int debug, PrintWriter writer) {
 		this.rf = theRF;
 		this.input = input;
 		this.output = output;
 		this.acker = acker;
 		this.ourMAC = ourMAC;
 		this.debug = debug;
+		this.writer = writer;
 	}
 	 
 	 private void unpackIt(Packet packet) {
 		 long time = rf.clock();
 		 System.out.println(time);
-		 if (packet.getDestAddress() == -1 || packet.getDestAddress() == ourMAC) {
+		 if ((packet.getDestAddress() == -1 && packet.getSourceAddress() != ourMAC) || packet.getDestAddress() == ourMAC) {
 			 try {
 				 if (packet.getType() == 1) {
 						this.acker.put(packet);
