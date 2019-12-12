@@ -20,9 +20,9 @@ public class sender implements Runnable {
 	private boolean gotAck = false;
 	private int state = 0;
 	private Packet theAck;
-	private boolean max;
-	private int debug;
-	private PrintWriter writer;
+	private static boolean max;
+	private static int debug;
+	private static PrintWriter writer;
 	
 	public sender(RF theRF, ArrayBlockingQueue<Packet> output, ArrayBlockingQueue<Packet> acker, ArrayBlockingQueue<Packet> limiter, boolean maxCollisionWindow, int debug, PrintWriter writer) {
 		rf = theRF;
@@ -65,14 +65,13 @@ public class sender implements Runnable {
 		while(true) {
 			System.out.println(debug);
 			System.out.println(max);
-			//if(debug == 1) {
-				writer.println("Starting collision window at " + curpack.length + " bytes for " + packet.getDestAddress());   
-			//}
+			if(debug == 1) {
+				writer.println("Starting collision window at [0..." + backoff + "]");   
+			}
 			transmit(); 
 			long time = rf.clock();
 			//System.out.println(time);
 			
-
 			if (packet.getDestAddress() != -1) {
 				waitForAck();
 			}
@@ -87,6 +86,9 @@ public class sender implements Runnable {
 				e.printStackTrace();
 			}
 	    	try {
+	    		if(debug == 1) {
+					writer.println("Moving to AWAIT_PACKET after broadcasting DATA");   
+				}
 				packet = output.take();
 				curpack = packet.packet;
 				gotAck = false;
@@ -101,6 +103,7 @@ public class sender implements Runnable {
 	}
 	
 	private void waitIfs() {
+		writer.println("Moving to IDLE_DIFS_WAIT with pending DATA");
 		try {
 			Thread.sleep(ifs);
 		} catch (InterruptedException e1) {			//wait difs
@@ -138,6 +141,9 @@ public class sender implements Runnable {
 			 backoff();
 		 }		 
 		 
+		 if(debug == 1 && state == 0) {
+			 writer.println("Transmitting DATA after simple DIFS wait at " + rf.clock());   
+		 }
 		 rf.transmit(curpack); 				//send current packet
 	}
 	
@@ -216,7 +222,20 @@ public class sender implements Runnable {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		//System.out.println(rf.clock());
+		if(debug == 1) {
+			 writer.println("Idle waited until " + rf.clock());   
+		}
 	}
 	
+	public synchronized static void setCollisionWindow(int maxCol) {
+		if (maxCol != 0) {
+			max = true;
+		}else {
+			max = false;
+		}
+	}
+	
+	public synchronized static void setDebug(int debugger) {
+		debug = debugger;
+	}
 }
