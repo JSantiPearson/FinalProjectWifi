@@ -50,7 +50,7 @@ public class LinkLayer implements Dot11Interface
 		output.println("LinkLayer: Constructor ran.");
 		this.destSeqNums = new HashMap<Short, Short>();
 		theRF = new RF(null, null);
-		sender send = new sender(theRF, packetHolder, ackHolder, limiter);
+		sender send = new sender(theRF, packetHolder, ackHolder, limiter, maxCollisionWindow);
 		(new Thread(send)).start();
 		read = new reader(theRF, packetHolderIn, packetHolder, ackHolder, ourMAC);
 		(new Thread(read)).start();
