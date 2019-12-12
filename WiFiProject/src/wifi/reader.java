@@ -18,13 +18,15 @@ public class reader implements Runnable {
 	private byte[] data = new byte[0];
 	@SuppressWarnings("static-access")
 	private int sifs = rf.aSIFSTime;
+	private int debug;
 	
-	public reader(RF theRF, ArrayBlockingQueue<Packet> input, ArrayBlockingQueue<Packet> output, ArrayBlockingQueue<Packet> acker, short ourMAC) {
+	public reader(RF theRF, ArrayBlockingQueue<Packet> input, ArrayBlockingQueue<Packet> output, ArrayBlockingQueue<Packet> acker, short ourMAC, int debug) {
 		this.rf = theRF;
 		this.input = input;
 		this.output = output;
 		this.acker = acker;
 		this.ourMAC = ourMAC;
+		this.debug = debug;
 	}
 	 
 	 private void unpackIt(Packet packet) {

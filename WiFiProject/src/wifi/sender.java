@@ -20,13 +20,15 @@ public class sender implements Runnable {
 	private int state = 0;
 	private Packet theAck;
 	private boolean max;
+	private int debug;
 	
-	public sender(RF theRF, ArrayBlockingQueue<Packet> output, ArrayBlockingQueue<Packet> acker, ArrayBlockingQueue<Packet> limiter, boolean maxCollisionWindow) {
+	public sender(RF theRF, ArrayBlockingQueue<Packet> output, ArrayBlockingQueue<Packet> acker, ArrayBlockingQueue<Packet> limiter, boolean maxCollisionWindow, int debug) {
 		rf = theRF;
 		this.output = output;
 		this.acker = acker;
 		this.limit = limiter;
 		this.max = maxCollisionWindow;
+		this.debug = debug;
 	}
 
 	@SuppressWarnings("static-access")
