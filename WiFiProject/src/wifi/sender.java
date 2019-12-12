@@ -54,6 +54,7 @@ public class sender implements Runnable {
 	@Override
 	public void run() {
 		System.out.println("Writer is alive and well");
+		
 		try {
 			packet = output.take();
 			System.out.println(packet);
@@ -63,20 +64,16 @@ public class sender implements Runnable {
 		}
 		 
 		while(true) {
-			System.out.println(debug);
-			System.out.println(max);
-			if(debug == 1) {
-				writer.println("Starting collision window at [0..." + backoff + "]");   
-			}
+			
 			transmit(); 
+			
 			long time = rf.clock();
-			//System.out.println(time);
 			
 			if (packet.getDestAddress() != -1) {
 				waitForAck();
 			}
+			
 			long diff = rf.clock() - time;
-			//System.out.println(diff);
 			
 			limit.remove();                //if packet was acked remove from limiter
 			
@@ -86,15 +83,18 @@ public class sender implements Runnable {
 				e.printStackTrace();
 			}
 	    	try {
+	    		
 	    		if(debug == 1) {
 					writer.println("Moving to AWAIT_PACKET after broadcasting DATA");   
 				}
+	    		
 				packet = output.take();
 				curpack = packet.packet;
 				gotAck = false;
 				state = 0;
 				System.out.println("next packet");
 				numRetrys = 0;
+
 			} catch (InterruptedException e) {			
 				e.printStackTrace();
 			}
@@ -103,7 +103,19 @@ public class sender implements Runnable {
 	}
 	
 	private void waitIfs() {
-		writer.println("Moving to IDLE_DIFS_WAIT with pending DATA");
+		if(debug == 1) {	  
+			if (state == 0) {
+				writer.println("Moving to IDLE_DIFS_WAIT with pending DATA");
+			}
+			else {
+				writer.println("Moving to BUSY_DIFS_WAIT after ACK timeout.  (slotCount = " + slot + ")");
+			}
+		}
+		
+		if(debug == 1) {
+			 writer.println("Waiting for DIFS to elapse after current Tx...");   
+		 }
+
 		try {
 			Thread.sleep(ifs);
 		} catch (InterruptedException e1) {			//wait difs
@@ -123,6 +135,18 @@ public class sender implements Runnable {
 	}
 	
 	private void transmit() {
+		
+		if(debug == 1) {
+			writer.println("Starting collision window at [0..." + backoff + "]");   
+		}
+		
+		if(max) {
+			slot = backoff;												//if command is in 2 set slot to max value
+		}
+		else {
+			slot = rand.nextInt(backoff + 1);							//set slot to some random number
+		}
+		
 		if(rf.inUse()) {  					  //if channel is busy change state to one
 			 state = 1;
 		 }
@@ -138,16 +162,28 @@ public class sender implements Runnable {
 		 waitWhileBusy();	
 		 
 		 if(state == 1) {
+			 if(debug == 1) {
+				 writer.println("DIFS wait is over, starting slot countdown (" + slot + ")");   
+			 }
 			 backoff();
 		 }		 
 		 
 		 if(debug == 1 && state == 0) {
 			 writer.println("Transmitting DATA after simple DIFS wait at " + rf.clock());   
 		 }
+		 if(debug == 1 && state == 1) {
+			 writer.println("Transmitting DATA after DIFS+SLOTs wait at " + rf.clock());   
+		 }		 
+		 
 		 rf.transmit(curpack); 				//send current packet
 	}
 	
 	private void waitForAck() {
+		
+		if(debug == 1) {
+			 writer.println("Moving to AWAIT_ACK after sending DATA");   
+		 }
+		
 		 numRetrys = 0;
 		 while(!gotAck) {							 //wait for ack with the correct sequence number
 			 try {
@@ -156,18 +192,31 @@ public class sender implements Runnable {
 				e.printStackTrace();
 			}
 			if(theAck == null) {							//if ack equals null there was a timeout and we should retransmit the packet and increase the contention window
+				
+				if(debug == 1) {
+					 writer.println("Ack timer expired at " + rf.clock());   
+				}
+				
 				packet.setReTry(1);
 				System.out.println("resending");
 				System.out.println(packet);
 				numRetrys++;
 				state = 1;
-				if(backoff * 2 + 1 >= maxBackoff) {			//increase the collision window
-					backoff = maxBackoff;
+				
+				if(numRetrys != 1) {
+					
+					if(backoff * 2 + 1 >= maxBackoff) {			//increase the collision window
+						backoff = maxBackoff;
+					}
+					else {					
+					    backoff = (backoff * 2) + 1;
+					}
+					
+					if(debug == 1) {
+						 writer.println("Doubled collision window -- is now [0..." + backoff + "]");   
+					}
 				}
-				else {					
-				    backoff = (backoff * 2) + 1;
-				}
-				System.out.println("new boff" + backoff);
+
 				transmit();
 			}
 			if(theAck != null) {
@@ -183,12 +232,6 @@ public class sender implements Runnable {
 	}
 	
 	private void backoff() {
-		if(max) {
-			slot = backoff;												//if command is in 2 set slot to max value
-		}
-		else {
-			slot = rand.nextInt(backoff + 1);							//set slot to some random number
-		}
 		 
 		System.out.println(slot);
 		 while (state == 1 && slot != 0) {							//if the channel was not idle wait additional time
@@ -201,6 +244,7 @@ public class sender implements Runnable {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+			 
 			roundTo50(rf.clock(), rf);
 			slot--;
 			
