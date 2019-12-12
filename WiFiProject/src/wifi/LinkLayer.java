@@ -171,9 +171,11 @@ public class LinkLayer implements Dot11Interface
 				}
 				if (this.maxCollisionWindow) {
 					System.out.println("Using the maximum Collision Window value each time");
+					output.println("Using the maximum Collision Window value each time");
 					return 0;
 				}
 				System.out.println("Using a random Collision Window value each time");
+				output.println("Using a random Collision Window value each time");
 				return 0;
 			}
 			case 3: {

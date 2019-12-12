@@ -85,8 +85,8 @@ public class sender implements Runnable {
 	    	try {
 	    		
 	    		if(debug == 1) {
-					writer.println("Moving to AWAIT_PACKET after broadcasting DATA");   
-				}
+	   			    writer.println("Moving to AWAIT_PACKET after broadcasting DATA");   
+	   		    }
 	    		
 				packet = output.take();
 				curpack = packet.packet;
@@ -112,7 +112,7 @@ public class sender implements Runnable {
 			}
 		}
 		
-		if(debug == 1) {
+		if(debug == 1 && state == 1) {
 			 writer.println("Waiting for DIFS to elapse after current Tx...");   
 		 }
 
@@ -136,7 +136,7 @@ public class sender implements Runnable {
 	
 	private void transmit() {
 		
-		if(debug == 1) {
+		if(debug == 1 && numRetrys <= 1) {
 			writer.println("Starting collision window at [0..." + backoff + "]");   
 		}
 		
@@ -176,6 +176,7 @@ public class sender implements Runnable {
 		 }		 
 		 
 		 rf.transmit(curpack); 				//send current packet
+	
 	}
 	
 	private void waitForAck() {
