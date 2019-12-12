@@ -102,20 +102,17 @@ public class LinkLayer implements Dot11Interface
 	 * the Transmission object.  See docs for full description.
 	 */
 	public int recv(Transmission t) {
-		output.println("Link Layer initialized with MAC address " + ourMAC);
-		output.println("Send command 0 to see a list of supported commands");
+		output.println("LinkLayer: Pretending to block on recv()");
 		while(true) {
 			 try {
-				 if(packetHolderIn.size() < 4) {
-					 Packet packet = this.read.input.take();
-			         byte[] data = packet.getData();
-			         this.statusCode = SUCCESS;
-			         t.setSourceAddr(packet.getSourceAddress());
-			         t.setDestAddr(packet.getDestAddress());
-			         t.setBuf(data);
-			         //System.out.println(packet);
-			         return data.length;
-				 }
+				 Packet packet = this.read.input.take();
+		         byte[] data = packet.getData();
+		         this.statusCode = SUCCESS;
+		         t.setSourceAddr(packet.getSourceAddress());
+		         t.setDestAddr(packet.getDestAddress());
+		         t.setBuf(data);
+		         System.out.println("Test packet :" + packet);
+		         return data.length;
 			 } catch (InterruptedException e) {
 				 System.out.println("Something went wrong with the incoming data.");
 				 e.printStackTrace();
