@@ -19,12 +19,14 @@ public class sender implements Runnable {
 	private boolean gotAck = false;
 	private int state = 0;
 	private Packet theAck;
+	private boolean max;
 	
-	public sender(RF theRF, ArrayBlockingQueue<Packet> output, ArrayBlockingQueue<Packet> acker, ArrayBlockingQueue<Packet> limiter) {
+	public sender(RF theRF, ArrayBlockingQueue<Packet> output, ArrayBlockingQueue<Packet> acker, ArrayBlockingQueue<Packet> limiter, boolean maxCollisionWindow) {
 		rf = theRF;
 		this.output = output;
 		this.acker = acker;
 		this.limit = limiter;
+		this.max = maxCollisionWindow;
 	}
 
 	@SuppressWarnings("static-access")
@@ -165,7 +167,12 @@ public class sender implements Runnable {
 	}
 	
 	private void backoff() {
-		slot = rand.nextInt(backoff + 1);							//set slot to some random number
+		if(max) {
+			slot = backoff;												//if command is in 2 set slot to max value
+		}
+		else {
+			slot = rand.nextInt(backoff + 1);							//set slot to some random number
+		}
 		 
 		System.out.println(slot);
 		 while (state == 1 && slot != 0) {							//if the channel was not idle wait additional time
