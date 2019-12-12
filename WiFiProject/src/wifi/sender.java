@@ -1,6 +1,7 @@
 //sender class
 
 package wifi;
+import java.io.PrintWriter;
 import java.util.Random;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -21,14 +22,16 @@ public class sender implements Runnable {
 	private Packet theAck;
 	private boolean max;
 	private int debug;
+	private PrintWriter writer;
 	
-	public sender(RF theRF, ArrayBlockingQueue<Packet> output, ArrayBlockingQueue<Packet> acker, ArrayBlockingQueue<Packet> limiter, boolean maxCollisionWindow, int debug) {
+	public sender(RF theRF, ArrayBlockingQueue<Packet> output, ArrayBlockingQueue<Packet> acker, ArrayBlockingQueue<Packet> limiter, boolean maxCollisionWindow, int debug, PrintWriter writer) {
 		rf = theRF;
 		this.output = output;
 		this.acker = acker;
 		this.limit = limiter;
 		this.max = maxCollisionWindow;
 		this.debug = debug;
+		this.writer = writer;
 	}
 
 	@SuppressWarnings("static-access")
@@ -54,22 +57,26 @@ public class sender implements Runnable {
 		try {
 			packet = output.take();
 			System.out.println(packet);
-			curpack = packet.packet;
+			curpack = packet.packet;			
 		} catch (InterruptedException e1) {			
 			e1.printStackTrace();
 		}
 		 
 		while(true) {
+			System.out.println(debug);
+			//if(debug == 1) {
+				writer.println("Starting collision window at " + curpack.length + " bytes for " + packet.getDestAddress());   
+			//}
 			transmit(); 
 			long time = rf.clock();
-			System.out.println(time);
+			//System.out.println(time);
 			
 
 			if (packet.getDestAddress() != -1) {
 				waitForAck();
 			}
 			long diff = rf.clock() - time;
-			System.out.println(diff);
+			//System.out.println(diff);
 			
 			limit.remove();                //if packet was acked remove from limiter
 			
