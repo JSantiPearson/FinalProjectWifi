@@ -34,8 +34,7 @@ public class reader implements Runnable {
 	 
 	 private void unpackIt(Packet packet) {
 		 long time = rf.clock();
-		 System.out.println(time);
-		 if ((packet.getDestAddress() == -1 && packet.getSourceAddress() != ourMAC) || packet.getDestAddress() == ourMAC) {
+		 if (packet.getDestAddress() == ourMAC) {
 			 try {
 				 if (packet.getType() == 1) {
 						this.acker.put(packet);
@@ -49,8 +48,18 @@ public class reader implements Runnable {
 			}
 		 }
 		 
+		 if(packet.getDestAddress() == -1 && packet.getSourceAddress() != ourMAC) {
+			 try {
+				this.input.put(packet);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		 }
+		 
 		 if (packet.getDestAddress() == ourMAC && packet.getType() == 0) {	
 				ack = new Packet(1, 0, packet.getSeqNum(), ourMAC, packet.getSourceAddress(), data);
+				System.out.println(ack);
 				byte[] ackp = ack.packet;
 				waitSifs();
 				rf.transmit(ackp);
@@ -89,6 +98,5 @@ public class reader implements Runnable {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		System.out.println(rf.clock());
 	}
 }
