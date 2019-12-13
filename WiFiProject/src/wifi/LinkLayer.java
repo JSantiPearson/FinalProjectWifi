@@ -158,7 +158,7 @@ public class LinkLayer implements Dot11Interface
 				this.debug = value;
 				output.println("Setting debug to " + value);
 				sender.setDebug(debug);
-				sender.setDebug(debug);
+				reader.setDebug(debug);
 				return prevDebug;
 			}
 			case 2: {

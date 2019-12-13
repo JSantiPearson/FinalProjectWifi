@@ -61,6 +61,13 @@ public class reader implements Runnable {
 				byte[] ackp = ack.packet;
 				waitSifs();
 				rf.transmit(ackp);
+				
+				System.out.println(debug);
+				
+				if(debug == 1) {
+	   			    writer.println("Sending ACK back to " + ack.getDestAddress() + " : <ACK " + ack.getSeqNum() + " " + ack.getSourceAddress() + "-->" + ack.getDestAddress() + " [0 bytes] (" + ack.getChecksum() + ")>");   
+	   		    }
+	    		
 				long diff = rf.clock() - time;
 				System.out.println(diff);
 		}
