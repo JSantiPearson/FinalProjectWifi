@@ -52,7 +52,7 @@ public class LinkLayer implements Dot11Interface
 		theRF = new RF(null, null);
 		sender send = new sender(theRF, packetHolder, ackHolder, limiter, maxCollisionWindow, debug, output);
 		(new Thread(send)).start();
-		read = new reader(theRF, packetHolderIn, packetHolder, ackHolder, ourMAC, debug, output);
+		read = new reader(theRF, packetHolderIn, ackHolder, ourMAC, debug, output);
 		(new Thread(read)).start();
 	}
 	
@@ -157,6 +157,7 @@ public class LinkLayer implements Dot11Interface
 				int prevDebug = this.debug;
 				this.debug = value;
 				output.println("Setting debug to " + value);
+				sender.setDebug(debug);
 				sender.setDebug(debug);
 				return prevDebug;
 			}

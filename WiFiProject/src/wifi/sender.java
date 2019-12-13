@@ -23,6 +23,7 @@ public class sender implements Runnable {
 	private static boolean max;
 	private static int debug;
 	private static PrintWriter writer;
+	private static long whenAcked;
 	
 	public sender(RF theRF, ArrayBlockingQueue<Packet> output, ArrayBlockingQueue<Packet> acker, ArrayBlockingQueue<Packet> limiter, boolean maxCollisionWindow, int debug, PrintWriter writer) {
 		rf = theRF;
@@ -114,7 +115,7 @@ public class sender implements Runnable {
 		
 		if(debug == 1 && state == 1) {
 			 writer.println("Waiting for DIFS to elapse after current Tx...");   
-		 }
+		}
 
 		try {
 			Thread.sleep(ifs);
@@ -187,11 +188,12 @@ public class sender implements Runnable {
 		
 		 numRetrys = 0;
 		 while(!gotAck) {							 //wait for ack with the correct sequence number
-			 try {
+			try {
 				theAck = this.acker.poll(timeout, TimeUnit.MILLISECONDS);         //start timer using poll to specify timeout
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
+			
 			if(theAck == null) {							//if ack equals null there was a timeout and we should retransmit the packet and increase the contention window
 				
 				if(debug == 1) {
@@ -220,14 +222,22 @@ public class sender implements Runnable {
 
 				transmit();
 			}
-			if(theAck != null) {
-				if(theAck.getSeqNum() == packet.getSeqNum()) {    //check if ack has correct sequence number
-					gotAck = true;
+			
+			if (theAck != null && theAck.getSeqNum() == packet.getSeqNum()) {       //check if ack has correct sequence number
+				
+				if(debug == 1) {
+					
+					writer.println("Got a valid ACK: <ACK " + theAck.getSeqNum() + " " + theAck.getSourceAddress() + "-->" + theAck.getDestAddress() + " [0 bytes] (" + theAck.getChecksum() + ")>"); 
+					writer.println("Ack arrived " + whenAcked + " ms before timeout");
 				}
+				
+				gotAck = true;
 			}
 			else if(numRetrys == maxRetrys) { 						 //checks if retry limit is met and moves to next packet if it is
 				gotAck = true;
-				System.out.println("aborted packet");
+				if(debug == 1) {
+					 writer.println("Moving to AWAIT_PACKET after exceeding retry limit");   
+				}
 			}
 		 } 
 	}

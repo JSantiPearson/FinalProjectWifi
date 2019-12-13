@@ -12,20 +12,18 @@ public class reader implements Runnable {
 	private RF rf;
 	LinkLayer link;
 	ArrayBlockingQueue<Packet> input;
-	ArrayBlockingQueue<Packet> output;
 	ArrayBlockingQueue<Packet> acker;
 	private short ourMAC;
 	private Packet ack;
 	private byte[] data = new byte[0];
 	@SuppressWarnings("static-access")
 	private int sifs = rf.aSIFSTime;
-	private int debug;
+	private static int debug;
 	private PrintWriter writer;
 	
-	public reader(RF theRF, ArrayBlockingQueue<Packet> input, ArrayBlockingQueue<Packet> output, ArrayBlockingQueue<Packet> acker, short ourMAC, int debug, PrintWriter writer) {
+	public reader(RF theRF, ArrayBlockingQueue<Packet> input, ArrayBlockingQueue<Packet> acker, short ourMAC, int debug, PrintWriter writer) {
 		this.rf = theRF;
 		this.input = input;
-		this.output = output;
 		this.acker = acker;
 		this.ourMAC = ourMAC;
 		this.debug = debug;
@@ -98,5 +96,9 @@ public class reader implements Runnable {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+	
+	public synchronized static void setDebug(int debugger) {
+		debug = debugger;
 	}
 }
