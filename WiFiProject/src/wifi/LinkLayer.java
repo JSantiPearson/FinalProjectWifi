@@ -28,6 +28,7 @@ public class LinkLayer implements Dot11Interface
 	public boolean maxCollisionWindow;
 	private int debug;
 	private int statusCode;
+	private boolean displayed = false;
 	
 	public reader read;
 	HashMap<Short, Short> destSeqNums;
@@ -104,8 +105,11 @@ public class LinkLayer implements Dot11Interface
 	 * the Transmission object.  See docs for full description.
 	 */
 	public int recv(Transmission t) {
-		output.println("Link Layer initialized with MAC address " + ourMAC);
-		output.println("Send command 0 to see a list of supported commands");
+		if (!displayed) {
+			output.println("Link Layer initialized with MAC address " + ourMAC);
+			output.println("Send command 0 to see a list of supported commands");
+			displayed = true;
+		}
 		while(true) {
 			if(packetHolderIn.size() < 4) {
 				 try {
