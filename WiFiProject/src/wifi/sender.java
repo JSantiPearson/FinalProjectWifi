@@ -23,7 +23,6 @@ public class sender implements Runnable {
 	private static boolean max;
 	private static int debug;
 	private static PrintWriter writer;
-	private static long whenAcked;
 	
 	public sender(RF theRF, ArrayBlockingQueue<Packet> output, ArrayBlockingQueue<Packet> acker, ArrayBlockingQueue<Packet> limiter, boolean maxCollisionWindow, int debug, PrintWriter writer) {
 		rf = theRF;
@@ -228,7 +227,6 @@ public class sender implements Runnable {
 				if(debug == 1) {
 					
 					writer.println("Got a valid ACK: <ACK " + theAck.getSeqNum() + " " + theAck.getSourceAddress() + "-->" + theAck.getDestAddress() + " [0 bytes] (" + theAck.getChecksum() + ")>"); 
-					writer.println("Ack arrived " + whenAcked + " ms before timeout");
 				}
 				
 				gotAck = true;
