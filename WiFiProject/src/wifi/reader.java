@@ -79,6 +79,14 @@ public class reader implements Runnable {
 		while(true) {
 			byte[] packetBytes = rf.receive();
 			Packet packet = new Packet(packetBytes);
+			
+			if(debug == 1) {
+   			    writer.println("Queued incoming DATA packet with good CRC: <DATA " + packet.getSeqNum() + " " + packet.getSourceAddress() + "-->" + packet.getDestAddress() + " [" + new String(packet.getData()) +  "] (" + packet.getChecksum() + ")>");   
+   		    }
+			if(debug == 1) {
+   			    writer.println("Receive has blocked, awaiting data");   
+   		    }
+			
 			this.unpackIt(packet);
 		}		
 	}
