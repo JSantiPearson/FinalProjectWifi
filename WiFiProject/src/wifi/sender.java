@@ -17,14 +17,16 @@ public class sender implements Runnable {
 	private Packet packet;
 	Random rand = new Random();
 	private byte[] curpack;
+	private Packet beacon;
 	private boolean gotAck = false;
 	private int state = 0;
 	private Packet theAck;
 	private static boolean max;
 	private static int debug;
 	private static PrintWriter writer;
+	private static short ourMAC;
 	
-	public sender(RF theRF, ArrayBlockingQueue<Packet> output, ArrayBlockingQueue<Packet> acker, ArrayBlockingQueue<Packet> limiter, boolean maxCollisionWindow, int debug, PrintWriter writer) {
+	public sender(RF theRF, ArrayBlockingQueue<Packet> output, ArrayBlockingQueue<Packet> acker, ArrayBlockingQueue<Packet> limiter, boolean maxCollisionWindow, int debug, PrintWriter writer, short ourMAC) {
 		rf = theRF;
 		this.output = output;
 		this.acker = acker;
@@ -32,6 +34,7 @@ public class sender implements Runnable {
 		this.max = maxCollisionWindow;
 		this.debug = debug;
 		this.writer = writer;
+		this.ourMAC = ourMAC;
 	}
 
 	@SuppressWarnings("static-access")
@@ -56,31 +59,40 @@ public class sender implements Runnable {
 		System.out.println("Writer is alive and well");
 		
 		try {
-			packet = output.take();
+			//packet = output.take();
+			// Will break out from waiting for packet so beacon can be sent.
+			packet = output.poll(5000, TimeUnit.MILLISECONDS);
+			sendBeacon();
 			System.out.println(packet);
-			curpack = packet.packet;			
+			if(packet != null) {
+			curpack = packet.packet;
+			}
 		} catch (InterruptedException e1) {			
 			e1.printStackTrace();
 		}
+		
 		 
+		// If breaks out above for beacon then will not attempt to send now if queue is empty
 		while(true) {
 			
-			transmit(); 
-			
-			long time = rf.clock();
-			
-			if (packet.getDestAddress() != -1) {
-				waitForAck();
-			}
-			
-			long diff = rf.clock() - time;
-			
-			limit.remove();                //if packet was acked remove from limiter
-			
-	    	try {
-				Thread.sleep(10);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
+				if(packet != null) {
+				transmit(); 
+				
+				long time = rf.clock();
+				
+				if (packet.getDestAddress() != -1) {
+					waitForAck();
+				}
+				
+				long diff = rf.clock() - time;
+				
+				limit.remove();                //if packet was acked remove from limiter
+				
+		    	try {
+					Thread.sleep(10);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
 			}
 	    	try {
 	    		
@@ -88,8 +100,11 @@ public class sender implements Runnable {
 	   			    writer.println("Moving to AWAIT_PACKET after broadcasting DATA");   
 	   		    }
 	    		
-				packet = output.take();
-				curpack = packet.packet;
+				packet = output.poll(5000, TimeUnit.MILLISECONDS);
+				sendBeacon();
+				if(packet != null) {
+					curpack = packet.packet;
+				}
 				gotAck = false;
 				state = 0;
 				System.out.println("next packet");
@@ -101,6 +116,31 @@ public class sender implements Runnable {
 	     }
 			
 	}
+	
+	// Sends beacons
+	private void sendBeacon() {
+		if(rf.inUse()) {
+			waitWhileBusy();
+			//calculate time for sending.
+			byte[] data = new byte[8];
+			beacon = new Packet(2, 0, (short) 0, ourMAC, (short) -1, data);
+			byte[] currentBeacon = beacon.packet;
+			rf.transmit(currentBeacon);
+		}
+		else {
+			byte[] data = new byte[8];
+			beacon = new Packet(2, 0, (short) 0, ourMAC, (short) -1, data);
+			byte[] currentBeacon = beacon.packet;
+			rf.transmit(currentBeacon);
+		}
+	}
+	
+	//makes time, will return byte[] when ready
+	private byte[] makeTime() {
+		
+		return;
+	}
+	
 	
 	private void waitIfs() {
 		if(debug == 1) {	  
