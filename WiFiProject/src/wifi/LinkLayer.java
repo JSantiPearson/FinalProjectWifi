@@ -1,5 +1,6 @@
 package wifi;
 import java.io.PrintWriter;
+import java.time.Clock;
 import java.util.HashMap;
 import java.util.concurrent.ArrayBlockingQueue;
 
@@ -29,6 +30,7 @@ public class LinkLayer implements Dot11Interface
 	private int debug;
 	private int statusCode;
 	private boolean displayed = false;
+	public static long globalOffset;
 	
 	public reader read;
 	HashMap<Short, Short> destSeqNums;
@@ -46,12 +48,13 @@ public class LinkLayer implements Dot11Interface
 	 * @param output  Output stream associated with GUI
 	 */
 	public LinkLayer(short ourMAC, PrintWriter output) {
+		globalOffset = 0;
 		this.ourMAC = ourMAC;
 		this.output = output;
 		output.println("LinkLayer: Constructor ran.");
 		this.destSeqNums = new HashMap<Short, Short>();
 		theRF = new RF(null, null);
-		sender send = new sender(theRF, packetHolder, ackHolder, limiter, maxCollisionWindow, debug, output);
+		sender send = new sender(theRF, packetHolder, ackHolder, limiter, maxCollisionWindow, debug, output, ourMAC);
 		(new Thread(send)).start();
 		read = new reader(theRF, packetHolderIn, ackHolder, ourMAC, debug, output);
 		(new Thread(read)).start();
@@ -128,6 +131,15 @@ public class LinkLayer implements Dot11Interface
 			}
 	      }
 	 } 
+	
+	/**
+	 * Returns the updated time.
+	 * @return The updated time.
+	 */
+	public static long clock(RF theRF) {
+		RF rf = theRF;
+		return rf.clock() + globalOffset;
+	}
 
 	/**
 	 * Returns a current status code.  See docs for full description.
