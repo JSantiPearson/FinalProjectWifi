@@ -2,6 +2,7 @@
 
 package wifi;
 import java.io.PrintWriter;
+import java.time.Clock;
 import java.util.Random;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -10,7 +11,7 @@ import rf.RF;
 
 public class sender implements Runnable {
 	
-	private RF rf;
+	private static RF rf;
 	ArrayBlockingQueue<Packet> output;
 	ArrayBlockingQueue<Packet> acker;
 	ArrayBlockingQueue<Packet> limit;
@@ -26,6 +27,7 @@ public class sender implements Runnable {
 	private static PrintWriter writer;
 	private static short ourMAC;
 	
+	
 	public sender(RF theRF, ArrayBlockingQueue<Packet> output, ArrayBlockingQueue<Packet> acker, ArrayBlockingQueue<Packet> limiter, boolean maxCollisionWindow, int debug, PrintWriter writer, short ourMAC) {
 		rf = theRF;
 		this.output = output;
@@ -36,6 +38,8 @@ public class sender implements Runnable {
 		this.writer = writer;
 		this.ourMAC = ourMAC;
 	}
+	
+	
 
 	@SuppressWarnings("static-access")
 	private int sifs = rf.aSIFSTime;
@@ -53,6 +57,7 @@ public class sender implements Runnable {
 	private int maxBackoff = rf.aCWmax;
 	
 	private long timeout = 1120 + sifs + slotTime;					//computed using the average time it takes to send an ack plus 
+	private static final long OUTGOINGOFFSET = 1585;		// Computed for the avg. propagation of a beacon.
 	
 	@Override
 	public void run() {
@@ -122,13 +127,14 @@ public class sender implements Runnable {
 		if(rf.inUse()) {
 			waitWhileBusy();
 			//calculate time for sending.
-			byte[] data = new byte[8];
+			byte[] data = makeTime();
+			// type: 2, retry: 0, seq: 0, ourMac, dest set to bcast: -1. data
 			beacon = new Packet(2, 0, (short) 0, ourMAC, (short) -1, data);
 			byte[] currentBeacon = beacon.packet;
 			rf.transmit(currentBeacon);
 		}
 		else {
-			byte[] data = new byte[8];
+			byte[] data = makeTime();
 			beacon = new Packet(2, 0, (short) 0, ourMAC, (short) -1, data);
 			byte[] currentBeacon = beacon.packet;
 			rf.transmit(currentBeacon);
@@ -136,9 +142,21 @@ public class sender implements Runnable {
 	}
 	
 	//makes time, will return byte[] when ready
-	private byte[] makeTime() {
+	private static byte[] makeTime() {
+		long timeNow = LinkLayer.clock(rf);
+		long timeToSend = (long) (timeNow + OUTGOINGOFFSET);
+		return timeToData(timeToSend);
 		
-		return;
+	}
+	
+	//Turn the time into data (long to byte[8].
+	public static byte[] timeToData(long l) {
+	    byte[] result = new byte[8];
+	    for (int i = 7; i >= 0; i--) {
+	        result[i] = (byte)(l & 0xFF);
+	        l >>= 8;
+	    }
+	    return result;
 	}
 	
 	

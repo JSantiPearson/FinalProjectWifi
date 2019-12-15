@@ -30,7 +30,7 @@ public class reader implements Runnable {
 		this.writer = writer;
 	}
 	 
-	 private void unpackIt(Packet packet) {
+	 private void unpackIt(Packet packet) throws InterruptedException {
 		 long time = rf.clock();
 		 if (packet.getDestAddress() == ourMAC) {
 			 try {
@@ -46,13 +46,26 @@ public class reader implements Runnable {
 			}
 		 }
 		 
-		 if(packet.getDestAddress() == -1 && packet.getSourceAddress() != ourMAC) {
+		 if(packet.getDestAddress() == -1 && packet.getSourceAddress() != ourMAC && packet.getType() != 2) {
 			 try {
 				this.input.put(packet);
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+		 }
+		 
+		 // Handle beacon frames and their time stamps
+		 if(packet.getDestAddress() == -1 && packet.getType() == 2) {
+			 // get packet time
+			 byte[] incomingData = packet.getData();
+			 long incomingTime = dataToTime(incomingData);
+			 System.out.println("Beacon has arrived! Timestamp: " + incomingTime + "\n");
+			 // Compare packet time to local
+			 long timeNow = LinkLayer.clock(rf);
+			 if(incomingTime > timeNow) {
+				 LinkLayer.globalOffset = incomingTime - timeNow;  // Adjusting local clock
+			 }
 		 }
 		 
 		 if (packet.getDestAddress() == ourMAC && packet.getType() == 0) {	
@@ -87,7 +100,12 @@ public class reader implements Runnable {
    			    writer.println("Receive has blocked, awaiting data");   
    		    }
 			
-			this.unpackIt(packet);
+			try {
+				this.unpackIt(packet);
+			}
+			catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 		}		
 	}
 	
@@ -112,6 +130,22 @@ public class reader implements Runnable {
 			e.printStackTrace();
 		}
 	}
+	
+	
+	/**
+	 * This method turns a byte[8] into a long.
+	 * @param b The byte[] that will converted; must be byte[8].
+	 * @return The long converted from the byte array.
+	 */
+	public static long dataToTime(byte[] b) {
+	    long result = 0;
+	    for (int i = 0; i < 8; i++) {
+	        result <<= 8;
+	        result |= (b[i] & 0xFF);
+	    }
+	    return result;
+	}
+		
 	
 	public synchronized static void setDebug(int debugger) {
 		debug = debugger;
