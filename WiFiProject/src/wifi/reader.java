@@ -61,10 +61,27 @@ public class reader implements Runnable {
 			 byte[] incomingData = packet.getData();
 			 long incomingTime = dataToTime(incomingData);
 			 System.out.println("Beacon has arrived! Timestamp: " + incomingTime + "\n");
+			 
+			 if(debug == 1) {
+	   			    writer.println("Got a beacon frame");   
+	   		 }
+			 
 			 // Compare packet time to local
 			 long timeNow = LinkLayer.clock(rf);
 			 if(incomingTime > timeNow) {
 				 LinkLayer.globalOffset = incomingTime - timeNow;  // Adjusting local clock
+				 long offset = incomingTime - timeNow;
+				 
+				 if(debug == 1) {
+		   			   writer.println("Advanced our clock by " + offset + " due to beacon:");   
+		   			   writer.println("   incoming offset was " + incomingTime + " vs. our " + timeNow + ".  Time is now"); 
+		   			   writer.println(incomingTime);  
+		   		 }
+				 
+			 }else {
+				 if(debug == 1) {
+		   			    writer.println("Ignored beacon: incoming timestamp was " + incomingTime + " vs. our " + timeNow);   
+		   		 }
 			 }
 		 }
 		 
