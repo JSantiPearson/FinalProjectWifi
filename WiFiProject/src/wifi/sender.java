@@ -101,7 +101,7 @@ public class sender implements Runnable {
 			}
 	    	try {
 	    		
-	    		if(debug == 1) {
+	    		if(debug == 1 && packet != null) {
 	   			    writer.println("Moving to AWAIT_PACKET after broadcasting DATA");   
 	   		    }
 	    		
@@ -110,9 +110,9 @@ public class sender implements Runnable {
 				if(packet != null) {
 					curpack = packet.packet;
 				}
+				
 				gotAck = false;
 				state = 0;
-				System.out.println("next packet");
 				numRetrys = 0;
 
 			} catch (InterruptedException e) {			
@@ -302,9 +302,7 @@ public class sender implements Runnable {
 		 
 		System.out.println(slot);
 		 while (state == 1 && slot != 0) {							//if the channel was not idle wait additional time
-			 System.out.println("exponential backoff");
-			 System.out.println(state);
-			 System.out.println("slot:" + slot);
+
 			 try {
 				Thread.sleep(slotTime);
 			} catch (InterruptedException e) {
