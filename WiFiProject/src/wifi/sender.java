@@ -27,6 +27,8 @@ public class sender implements Runnable {
 	private static PrintWriter writer;
 	private static short ourMAC;
 	
+	public static int interval = 3;
+	
 	
 	public sender(RF theRF, ArrayBlockingQueue<Packet> output, ArrayBlockingQueue<Packet> acker, ArrayBlockingQueue<Packet> limiter, boolean maxCollisionWindow, int debug, PrintWriter writer, short ourMAC) {
 		rf = theRF;
@@ -66,8 +68,13 @@ public class sender implements Runnable {
 		try {
 			//packet = output.take();
 			// Will break out from waiting for packet so beacon can be sent.
-			packet = output.poll(5000, TimeUnit.MILLISECONDS);
-			sendBeacon();
+			if (interval < 0) {
+				packet = output.take();
+			}
+			else {
+				packet = output.poll(interval*1000, TimeUnit.MILLISECONDS);
+				sendBeacon();
+			}
 			System.out.println(packet);
 			if(packet != null) {
 			curpack = packet.packet;
@@ -105,8 +112,13 @@ public class sender implements Runnable {
 	   			    writer.println("Moving to AWAIT_PACKET after broadcasting DATA");   
 	   		    }
 	    		
-				packet = output.poll(5000, TimeUnit.MILLISECONDS);
-				sendBeacon();
+	    		if (interval < 0) {
+					packet = output.take();
+				}
+				else {
+					packet = output.poll(interval*1000, TimeUnit.MILLISECONDS);
+					sendBeacon();
+				}
 				if(packet != null) {
 					curpack = packet.packet;
 				}
@@ -343,6 +355,11 @@ public class sender implements Runnable {
 			max = false;
 		}
 	}
+	
+	public synchronized static void setBeaconInterval(int beaconInterval) {
+		interval = beaconInterval;
+	}
+		
 	
 	public synchronized static void setDebug(int debugger) {
 		debug = debugger;

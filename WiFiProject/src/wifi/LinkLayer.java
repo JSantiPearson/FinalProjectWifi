@@ -154,9 +154,9 @@ public class LinkLayer implements Dot11Interface
 	public int command(int cmnd, int value) {
 		switch (cmnd) {
 			case 0: {
-				System.out.println("------------ Commands and Settings -------------");
-				System.out.println("Cmd #0: Display command options and current settings");
-				System.out.println("Cmd #1: Set debug level.  Currently at " + this.debug + "\n		  Use -1 for full debug output, 0 for no output");
+				output.println("------------ Commands and Settings -------------");
+				output.println("Cmd #0: Display command options and current settings");
+				output.println("Cmd #1: Set debug level.  Currently at " + this.debug + "\n Use 1 for full debug output, 0 for no output");
 				String collision;
 				if (this.maxCollisionWindow) {
 					collision = "max";
@@ -164,9 +164,16 @@ public class LinkLayer implements Dot11Interface
 				else {
 					collision = "random";
 				}
-				System.out.println("Cmd #2: Set slot selection method.  Currently " + collision + "\n		  Use 0 for random slot selection, any other value to use maxCW");
-				System.out.println("Cmd #3: Set beacon interval.  Currently at " + "*beacon interval goes here*" + " seconds" + "\n		  Value specifies seconds between the start of beacons; -1 disables");
-				System.out.println("------------------------------------------------");
+				output.println("Cmd #2: Set slot selection method.  Currently " + collision + "\n  Use 0 for random slot selection, any other value to use maxCW");
+				
+				if (sender.interval >= 0) {
+					output.println("Cmd #3: Set beacon interval.  Currently at " + sender.interval + " seconds" + "\n  Value specifies seconds between the start of beacons; -1 disables");
+				}
+				else {
+					output.println("Cmd #3: Set beacon interval.  Currently disabled. \n  Value specifies seconds between the start of beacons; -1 disables");
+				}
+				
+				output.println("------------------------------------------------");
 				return 0;
 			}
 			case 1: {
@@ -187,22 +194,20 @@ public class LinkLayer implements Dot11Interface
 					sender.setCollisionWindow(value);
 				}
 				if (this.maxCollisionWindow) {
-					System.out.println("Using the maximum Collision Window value each time");
 					output.println("Using the maximum Collision Window value each time");
 					return 0;
 				}
-				System.out.println("Using a random Collision Window value each time");
 				output.println("Using a random Collision Window value each time");
 				return 0;
 			}
 			case 3: {
 				if (value < 0) {
 					System.out.println("Beacon frames will never be sent");
-					//disable beacon frames here
+					sender.setBeaconInterval(value);
 					return 0;
 				}
 				System.out.println("Beacon frames will be sent every " + value + " seconds");
-				//set beacon frames here
+				sender.setBeaconInterval(value);
 				return 0;
 			}
 		}
