@@ -53,7 +53,7 @@ public class reader implements Runnable {
 	 * @throws InterruptedException Exception error to be thrown.
 	 */
 	 private void unpackIt(Packet packet) throws InterruptedException {
-		 long time = rf.clock();
+		 long time = LinkLayer.clock(rf);
 		 if (packet.getDestAddress() == ourMAC) {
 			 try {
 				 if (packet.getType() == 1) {
@@ -120,7 +120,7 @@ public class reader implements Runnable {
 	   			    writer.println("Sending ACK back to " + ack.getDestAddress() + " : <ACK " + ack.getSeqNum() + " " + ack.getSourceAddress() + "-->" + ack.getDestAddress() + " [0 bytes] (" + ack.getChecksum() + ")>");   
 	   		    }
 	    		
-				long diff = rf.clock() - time;
+				long diff = LinkLayer.clock(rf) - time;
 				System.out.println(diff);
 		}
 	}
@@ -160,7 +160,7 @@ public class reader implements Runnable {
 		} catch (InterruptedException e1) {			//wait ifs either sifs or difs
 			e1.printStackTrace();
 		}
-		roundTo50(rf.clock(), rf);
+		roundTo50(LinkLayer.clock(rf), rf);
 	}
 	
 	/**

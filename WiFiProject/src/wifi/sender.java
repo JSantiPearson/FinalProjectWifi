@@ -315,7 +315,7 @@ public class sender implements Runnable {
 			if(theAck == null) {							//if ack equals null there was a timeout and we should retransmit the packet and increase the contention window
 				
 				if(debug == 1) {
-					 writer.println("Ack timer expired at " + rf.clock());   
+					 writer.println("Ack timer expired at " + LinkLayer.clock(rf));   
 				}
 				
 				packet.setReTry(1);
