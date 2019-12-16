@@ -11,6 +11,7 @@ import rf.RF;
 
 public class sender implements Runnable {
 	
+	// Instance variables
 	private static RF rf;
 	ArrayBlockingQueue<Packet> output;
 	ArrayBlockingQueue<Packet> acker;
@@ -30,6 +31,18 @@ public class sender implements Runnable {
 	public static int interval = 3;
 	
 	
+	/**
+	 * Constructor creates a sender object.
+	 * 
+	 * @param theRF Rf layer to be used.
+	 * @param output The array blocking queue from which queued packets will be sent.
+	 * @param acker The array blocking queue from which acks are stored.
+	 * @param limiter The limited
+	 * @param maxCollisionWindow The max collision window
+	 * @param debug
+	 * @param writer The printwriter to be used.
+	 * @param ourMAC Our mac address which will be used to send packets.
+	 */
 	public sender(RF theRF, ArrayBlockingQueue<Packet> output, ArrayBlockingQueue<Packet> acker, ArrayBlockingQueue<Packet> limiter, boolean maxCollisionWindow, int debug, PrintWriter writer, short ourMAC) {
 		rf = theRF;
 		this.output = output;
@@ -58,21 +71,22 @@ public class sender implements Runnable {
 	@SuppressWarnings("static-access")
 	private int maxBackoff = rf.aCWmax;
 	
+	// instance variables 2
 	private long timeout = 1120 + sifs + slotTime;					//computed using the average time it takes to send an ack plus 
-	private static final long OUTGOINGOFFSET = 1585;		// Computed for the avg. propagation of a beacon.
+	private static final long OUTGOINGOFFSET = 1585;	// Computed for the avg. propagation of a beacon.
+	private static final long BEACON_DELAY = 1740; 		// Computed for "real world" delivery of beacons.
 	
+	// Run thread
 	@Override
 	public void run() {
 		System.out.println("Writer is alive and well");
 		
 		try {
-			//packet = output.take();
-			// Will break out from waiting for packet so beacon can be sent.
 			if (interval < 0) {
 				packet = output.take();
 			}
 			else {
-				packet = output.poll(interval*1000, TimeUnit.MILLISECONDS);
+				packet = output.poll(((interval*1000) - BEACON_DELAY), TimeUnit.MILLISECONDS);		// Will break out from waiting for packet so beacon can be sent.
 				sendBeacon();
 			}
 			System.out.println(packet);
@@ -90,13 +104,13 @@ public class sender implements Runnable {
 				if(packet != null) {
 				transmit(); 
 				
-				long time = rf.clock();
+				long time = LinkLayer.clock(rf);
 				
 				if (packet.getDestAddress() != -1) {
 					waitForAck();
 				}
 				
-				long diff = rf.clock() - time;
+				long diff = LinkLayer.clock(rf) - time;
 				
 				limit.remove();                //if packet was acked remove from limiter
 				
@@ -113,10 +127,10 @@ public class sender implements Runnable {
 	   		    }
 	    		
 	    		if (interval < 0) {
-					packet = output.take();
+					packet = output.take(); // if beacons are -1 in command.
 				}
 				else {
-					packet = output.poll(interval*1000, TimeUnit.MILLISECONDS);
+					packet = output.poll(((interval*1000) - BEACON_DELAY), TimeUnit.MILLISECONDS); // breaks out for beacons.
 					sendBeacon();
 				}
 				if(packet != null) {
@@ -134,9 +148,13 @@ public class sender implements Runnable {
 			
 	}
 	
-	// Sends beacons
+	/**
+	 *  Private method
+	 * 
+	 * This method sends beacons
+	 */
 	private void sendBeacon() {
-		if(rf.inUse()) {
+		if(rf.inUse()) {		// Checks if sending.
 			waitWhileBusy();
 			//calculate time for sending.
 			byte[] data = makeTime();
@@ -153,15 +171,24 @@ public class sender implements Runnable {
 		}
 	}
 	
-	//makes time, will return byte[] when ready
-	private static byte[] makeTime() {
+		/**
+		 * 	Private method
+		 * 
+		 * This method creates the time stamp for the outgoing beacons.
+		 * @return The time stamp in type long.
+		 */
+		private static byte[] makeTime() {
 		long timeNow = LinkLayer.clock(rf);
-		long timeToSend = (long) (timeNow + OUTGOINGOFFSET);
+		long timeToSend = (long) (timeNow + OUTGOINGOFFSET); // Off set added.
 		return timeToData(timeToSend);
 		
 	}
 	
-	//Turn the time into data (long to byte[8].
+	/**
+	 * 
+	 * @param This method turns a long into a byte[8]
+	 * @return The byte[8[ holding the time stamp
+	 */
 	public static byte[] timeToData(long l) {
 	    byte[] result = new byte[8];
 	    for (int i = 7; i >= 0; i--) {
@@ -172,6 +199,12 @@ public class sender implements Runnable {
 	}
 	
 	
+	
+	/**
+	 * Private method
+	 * 
+	 * Waits inter frame space.
+	 */
 	private void waitIfs() {
 		if(debug == 1) {	  
 			if (state == 0) {
@@ -191,9 +224,14 @@ public class sender implements Runnable {
 		} catch (InterruptedException e1) {			//wait difs
 			e1.printStackTrace();
 		}
-		roundTo50(rf.clock(), rf);					//round up to nearest 50 ms
+		roundTo50(LinkLayer.clock(rf), rf);					//round up to nearest 50 ms
 	}
 	
+	/**
+	 * 	Private method
+	 * 
+	 * This method puts the thread to sleep if channel is in use.
+	 */
 	private void waitWhileBusy() {
 		while(rf.inUse()) {                  //sleep while channel is busy
 			 try {
@@ -204,6 +242,11 @@ public class sender implements Runnable {
 		 }
 	}
 	
+	/**
+	 * 	Private method
+	 * 
+	 * This method transmits data packets on the channel.
+	 */
 	private void transmit() {
 		
 		if(debug == 1 && numRetrys <= 1) {
@@ -239,16 +282,22 @@ public class sender implements Runnable {
 		 }		 
 		 
 		 if(debug == 1 && state == 0) {
-			 writer.println("Transmitting DATA after simple DIFS wait at " + rf.clock());   
+			 writer.println("Transmitting DATA after simple DIFS wait at " + LinkLayer.clock(rf));   
 		 }
 		 if(debug == 1 && state == 1) {
-			 writer.println("Transmitting DATA after DIFS+SLOTs wait at " + rf.clock());   
+			 writer.println("Transmitting DATA after DIFS+SLOTs wait at " + LinkLayer.clock(rf));   
 		 }		 
 		 
 		 rf.transmit(curpack); 				//send current packet
 	
 	}
 	
+	/**
+	 * 
+	 * Private method
+	 * 
+	 * Waits for ACKS.
+	 */
 	private void waitForAck() {
 		
 		if(debug == 1) {
@@ -310,6 +359,11 @@ public class sender implements Runnable {
 		 } 
 	}
 	
+	/**
+	 * 
+	 * 	Private method
+	 *  Implements back off.
+	 */
 	private void backoff() {
 		 
 		System.out.println(slot);
@@ -322,7 +376,7 @@ public class sender implements Runnable {
 				e.printStackTrace();
 			}
 			 
-			roundTo50(rf.clock(), rf);
+			roundTo50(LinkLayer.clock(rf), rf);
 			slot--;
 			
 			if (rf.inUse()) {
@@ -332,6 +386,13 @@ public class sender implements Runnable {
 		 }
 	}
 	
+	/**
+	 *  Private method
+	 * 
+	 * This method rounds to 50.
+	 * @param time The time
+	 * @param rf the RF to use.
+	 */
 	private static void roundTo50(long time, RF rf) {				//code for rounding to nearest 50 ms
 		long offset = time % 50;
 		long off = Math.abs(50 - offset);
@@ -344,10 +405,14 @@ public class sender implements Runnable {
 			e.printStackTrace();
 		}
 		if(debug == 1) {
-			 writer.println("Idle waited until " + rf.clock());   
+			 writer.println("Idle waited until " + LinkLayer.clock(rf));   
 		}
 	}
 	
+	/**
+	 *  This method sets the collision window size.
+	 * @param maxCol The max collision size.
+	 */
 	public synchronized static void setCollisionWindow(int maxCol) {
 		if (maxCol != 0) {
 			max = true;
@@ -356,11 +421,12 @@ public class sender implements Runnable {
 		}
 	}
 	
+	// Sets beacon interval from command 
 	public synchronized static void setBeaconInterval(int beaconInterval) {
 		interval = beaconInterval;
 	}
 		
-	
+	// Sets debugger from command
 	public synchronized static void setDebug(int debugger) {
 		debug = debugger;
 	}

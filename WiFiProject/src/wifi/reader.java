@@ -7,8 +7,14 @@ import java.util.concurrent.ArrayBlockingQueue;
 
 import rf.RF;
 
+/**
+ * Reads incoming packets.
+ * @author brayanrodriguez, nathanielchuside, jordanpearson.
+ *
+ */
 public class reader implements Runnable {
 	
+	// Instance variables
 	private RF rf;
 	LinkLayer link;
 	ArrayBlockingQueue<Packet> input;
@@ -21,6 +27,15 @@ public class reader implements Runnable {
 	private static int debug;
 	private PrintWriter writer;
 	
+	/**
+	 *  Constructor for creating the reader object.
+	 * @param theRF The RF to use
+	 * @param input The array blocking queue that will queue incoming packets.
+	 * @param acker The array blocking queue that queues acks
+	 * @param ourMAC Our Mac address we will use to check for our packets.
+	 * @param debug The debugger input
+	 * @param writer The printer writer to use.
+	 */
 	public reader(RF theRF, ArrayBlockingQueue<Packet> input, ArrayBlockingQueue<Packet> acker, short ourMAC, int debug, PrintWriter writer) {
 		this.rf = theRF;
 		this.input = input;
@@ -30,6 +45,13 @@ public class reader implements Runnable {
 		this.writer = writer;
 	}
 	 
+	/**
+	 * 	Private method
+	 * 
+	 * Un-packs a packet that flew in from the channel, and makes sure it is processeda appropriately.
+	 * @param packet The packet to be processed.
+	 * @throws InterruptedException Exception error to be thrown.
+	 */
 	 private void unpackIt(Packet packet) throws InterruptedException {
 		 long time = rf.clock();
 		 if (packet.getDestAddress() == ourMAC) {
@@ -103,6 +125,7 @@ public class reader implements Runnable {
 		}
 	}
 
+	 // Run thread
 	@Override
 	public void run() {
 		System.out.println("Reader is alive and well");
@@ -126,6 +149,11 @@ public class reader implements Runnable {
 		}		
 	}
 	
+	/**
+	 *  Private method
+	 * 
+	 *  This method will wait short inter frame.
+	 */
 	private void waitSifs() {
 		try {
 			Thread.sleep(sifs);
@@ -135,6 +163,14 @@ public class reader implements Runnable {
 		roundTo50(rf.clock(), rf);
 	}
 	
+	/**
+	 * Private method
+	 * 
+	 * Mods time by 50, then sleeps.
+	 * 
+	 * @param time
+	 * @param rf
+	 */
 	private static void roundTo50(long time, RF rf) {
 		long offset = time % 50;
 		long off = Math.abs(50 - offset);
@@ -163,7 +199,7 @@ public class reader implements Runnable {
 	    return result;
 	}
 		
-	
+	// This method sets the debugger.
 	public synchronized static void setDebug(int debugger) {
 		debug = debugger;
 	}

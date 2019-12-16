@@ -133,8 +133,8 @@ public class LinkLayer implements Dot11Interface
 	 } 
 	
 	/**
-	 * Returns the updated time.
-	 * @return The updated time.
+	 * This method produces the synchronized time.
+	 * @return The current time.
 	 */
 	public static long clock(RF theRF) {
 		RF rf = theRF;
