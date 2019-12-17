@@ -28,7 +28,7 @@ public class sender implements Runnable {
 	private static PrintWriter writer;
 	private static short ourMAC;
 	
-	public static int interval = 3;
+	public static int interval = -1;
 	
 	
 	/**
@@ -83,7 +83,7 @@ public class sender implements Runnable {
 		
 		try {
 			if (interval < 0) {
-				packet = output.take();
+				packet = output.poll(5000, TimeUnit.MILLISECONDS);
 			}
 			else {
 				packet = output.poll(((interval*1000) - BEACON_DELAY), TimeUnit.MILLISECONDS);		// Will break out from waiting for packet so beacon can be sent.
@@ -127,7 +127,7 @@ public class sender implements Runnable {
 	   		    }
 	    		
 	    		if (interval < 0) {
-					packet = output.take(); // if beacons are -1 in command.
+					packet = output.poll(5000, TimeUnit.MILLISECONDS); // if beacons are -1 in command.
 				}
 				else {
 					packet = output.poll(((interval*1000) - BEACON_DELAY), TimeUnit.MILLISECONDS); // breaks out for beacons.
