@@ -21,5 +21,3 @@ Timing done on 2018 Macbook pro 15:
 			  Hyper-Threading Technology:	Enabled
 			  Memory:	16 GB
 			  Boot ROM Version:	220.270.99.0.0 (iBridge: 16.16.6571.0.0,0)
-			  Serial Number (system):	C02X35ZTJG5H
-			  Hardware UUID:	6C36B903-4C47-54B4-8243-8A5D977C2616
